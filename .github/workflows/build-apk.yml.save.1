@@ -38,7 +38,9 @@ jobs:
       - name: Allow HTTP traffic to the API
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
-          grep -q 'permission.INTERNET' $MANIFEST || sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|' $MANIFESTn          grep -q 'usesCleartextTraffic' $MANIFEST || \
+          grep -q 'usesCleartextTraffic' $MANIFEST || \
+grep -q 'permission.INTERNET' $MANIFEST || \
+            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|' $MANIFEST
             sed -i 's|<application|<application\n        android:usesCleartextTraffic="true"|' $MANIFEST
           sed -i 's|android:label="[^"]*"|android:label="YAZI"|' $MANIFEST
           cat $MANIFEST
