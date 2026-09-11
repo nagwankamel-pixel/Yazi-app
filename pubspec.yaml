@@ -1,0 +1,45 @@
+name: yozi_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.6.0+13
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_map: ^8.3.1
+  geolocator: ^14.0.2
+  google_fonts: ^6.3.2
+  http: ^1.6.0
+  latlong2: ^0.10.1
+  provider: ^6.1.5+1
+  shared_preferences: ^2.5.3
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/header.jpg
+    - assets/icons3d/
+    - assets/logo.png
+    - assets/icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icon.png"

@@ -1,0 +1,8 @@
+build/
+.dart_tool/
+.packages
+android/local.properties
+ios/Pods/
+ios/.symlinks/
+*.iml
+.DS_Store
