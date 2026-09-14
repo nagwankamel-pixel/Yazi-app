@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../core/state.dart';
@@ -154,6 +155,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                             Text(kAreas[biz.area].name(app.lang),
                                 style: const TextStyle(
                                     fontSize: 13, color: Yozi.muted)),
+                            // Item 11: only claim a travel time when one is
+                            // actually recorded. 13 nurseries have drive = 0.
                             if (biz.drive > 0) ...[
                               const Text('·',
                                   style: TextStyle(color: Yozi.muted)),
@@ -194,12 +197,13 @@ class _BusinessScreenState extends State<BusinessScreen> {
                 child: Row(children: [
                   _Action(
                       icon: Icons.call_rounded,
-                      label: app.t('call'),
+                      label: '',
+                      tooltip: app.t('call'),
                       onTap: () => _phone(biz) == null
                           ? showToast(context, '📞 ${app.t('calling')}')
                           : openUrl(context, 'tel:${_phone(biz)}')),
                   _Action(
-                      icon: Icons.chat_rounded,
+                      icon: FontAwesomeIcons.whatsapp,
                       label: '',
                       tooltip: app.t('whatsapp'),
                       color: Yozi.mint,
@@ -209,14 +213,15 @@ class _BusinessScreenState extends State<BusinessScreen> {
                               'https://wa.me/${_intl(_phone(biz)!)}')),
                   _Action(
                       icon: Icons.near_me_rounded,
-                      label: app.t('directions'),
+                      label: '',
+                      tooltip: app.t('directions'),
                       onTap: () => openUrl(
                           context,
                           biz.lat != null
                               ? 'https://www.google.com/maps/search/?api=1&query=${biz.lat},${biz.lng}'
                               : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(biz.nameEn)}')),
                   _Action(
-                      icon: Icons.facebook_rounded,
+                      icon: FontAwesomeIcons.facebookF,
                       label: '',
                       tooltip: app.t('facebook'),
                       color: const Color(0xFF1877F2),
@@ -226,7 +231,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                               ? biz.facebook!
                               : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
                   _Action(
-                      icon: Icons.camera_alt_rounded,
+                      icon: FontAwesomeIcons.instagram,
                       label: '',
                       tooltip: app.t('instagram'),
                       color: const Color(0xFFE1306C),

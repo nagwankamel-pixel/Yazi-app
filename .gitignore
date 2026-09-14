@@ -6,3 +6,8 @@ ios/Pods/
 ios/.symlinks/
 *.iml
 .DS_Store
+yazi.db
+yazi.db-shm
+yazi.db-wal
+server.log
+yazi-change-list.md

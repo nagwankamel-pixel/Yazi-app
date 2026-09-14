@@ -112,6 +112,8 @@ const _langSubcats = [
   Subcat('german', 'Deutsch', 'ألماني', asset: 'sub_german'),
   Subcat('english', 'English', 'إنجليزي', asset: 'sub_english'),
   Subcat('french', 'Français', 'فرنساوي', asset: 'sub_french'),
+  // Present in the data ("English+Arabic") but was missing from the picker.
+  Subcat('arabic', 'العربية', 'عربي'),
 ];
 
 const kSubcats = <String, List<Subcat>>{
@@ -120,21 +122,27 @@ const kSubcats = <String, List<Subcat>>{
   'play': [
     Subcat('indoor', 'Indoor', 'داخلي', asset: 'sub_indoor'),
     Subcat('outdoor', 'Outdoor', 'خارجي', asset: 'sub_outdoor'),
-    Subcat('indoor_outdoor', 'Indoor & Outdoor', 'داخلي وخارجي'),
     Subcat('pool', 'Pool', 'حمام سباحة', asset: 'sub_pool'),
-    Subcat('garden', 'Garden', 'حديقة'),
   ],
   'birthdays': [
-    Subcat('indoor', 'Indoor', 'داخلي', asset: 'sub_indoor'),
-    Subcat('outdoor', 'Outdoor', 'خارجي', asset: 'sub_outdoor'),
-    Subcat('pool', 'Pool', 'حمام سباحة', asset: 'sub_pool'),
+    // Indoor, Outdoor and Pool merged into one subcategory.
+    Subcat('playarea', 'Play Area', 'منطقة لعب', asset: 'sub_indoor'),
     Subcat('giveaways', 'Giveaways', 'توزيعات'),
     Subcat('cakes', 'Cakes', 'تورتات'),
     Subcat('decoration', 'Decoration', 'ديكور'),
     Subcat('programs', 'Programs', 'برامج وفقرات'),
   ],
+  'sports': [
+    Subcat('robotics', 'Robotics', 'روبوتيكس', icon: Icons.smart_toy_rounded),
+    Subcat('art', 'Art', 'فنون', icon: Icons.palette_rounded),
+    Subcat('quran', 'Quran', 'قرآن', icon: Icons.menu_book_rounded),
+    Subcat('music', 'Music', 'موسيقى', icon: Icons.music_note_rounded),
+    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية',
+        icon: Icons.home_rounded),
+  ],
   'activities': [
-    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية'),
+    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية',
+        icon: Icons.home_rounded),
   ],
   'firstdays': [
     Subcat('newborn', 'New Born', 'مولود جديد'),
@@ -204,6 +212,8 @@ class Business {
     required this.rating,
     required this.reviews,
     required this.ages,
+    this.minAgeMonths,
+    this.maxAgeMonths,
     required this.verified,
     this.sponsored = false,
     this.offer = false,
@@ -234,6 +244,10 @@ class Business {
 
   final String id, cat, grad, nameEn, nameAr, priceEn, priceAr;
   final String aboutEn, aboutAr, keywords, ages, subcat;
+
+  /// Age range in months. Set from the admin panel; preferred over the old
+  /// free-text [ages] field, which mixed months and years.
+  final int? minAgeMonths, maxAgeMonths;
   final int area, drive, reviews;
   final double rating;
   final bool verified, sponsored, offer, open;
@@ -294,7 +308,10 @@ class Business {
       drive: (j['drive'] as num?)?.toInt() ?? 0,
       rating: (j['rating'] as num?)?.toDouble() ?? 0,
       reviews: (j['reviews'] as num?)?.toInt() ?? 0,
-      ages: j['ages'] ?? '', verified: _b(j['verified']),
+      ages: j['ages'] ?? '',
+      minAgeMonths: (j['min_age_months'] as num?)?.toInt(),
+      maxAgeMonths: (j['max_age_months'] as num?)?.toInt(),
+      verified: _b(j['verified']),
       sponsored: _b(j['sponsored']), offer: _b(j['offer']),
       priceEn: j['price_en'] ?? '', priceAr: j['price_ar'] ?? j['price_en'] ?? '',
       open: _b(j['open']), keywords: j['keywords'] ?? '',
@@ -323,7 +340,27 @@ class Business {
 
   /// Parsed age range from the free-text `ages` field ("3 – 12"). Null when
   /// the field has no digits, so unknown ages never get filtered out.
+  /// Subcategories a listing belongs to. The database stores these as a single
+  /// free-text field that may hold several values ("English+French",
+  /// "English, Arabic") and inconsistent casing ("english"). Splitting and
+  /// lower-casing here lets a nursery that teaches two or three languages
+  /// match the filter for each one.
+  Set<String> get subcatIds => subcat
+      .split(RegExp(r'[+,/&]'))
+      .map((s) => s.trim().toLowerCase())
+      .where((s) => s.isNotEmpty)
+      .toSet();
+
+  bool hasSubcat(String id) => subcatIds.contains(id.trim().toLowerCase());
+
   (int, int)? get ageRange {
+    // Prefer the numeric months columns — the old free-text field read
+    // "3 months – 4 years" as 3 to 4 YEARS, which is wrong by a factor of 12.
+    if (minAgeMonths != null || maxAgeMonths != null) {
+      final lo = (minAgeMonths ?? 0) ~/ 12;
+      final hi = maxAgeMonths == null ? 99 : (maxAgeMonths! / 12).ceil();
+      return (lo, hi);
+    }
     final nums = RegExp(r'\d+')
         .allMatches(ages)
         .map((m) => int.parse(m.group(0)!))

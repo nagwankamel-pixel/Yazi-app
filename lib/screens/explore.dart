@@ -256,7 +256,7 @@ class ResultsScreen extends StatefulWidget {
   State<ResultsScreen> createState() => _ResultsScreenState();
 }
 
-/// Age filter bands shown as choices: (label-key, min, max).
+/// Age filter bands shown as choices: (label, min age, max age).
 const _ageBands = <(String, int, int)>[
   ('0–2', 0, 2),
   ('3–5', 3, 5),
@@ -264,10 +264,32 @@ const _ageBands = <(String, int, int)>[
   ('10+', 10, 99),
 ];
 
+/// School year levels, with the ages they normally cover. Schools filter by
+/// these instead of raw ages, so a parent picks the stage their child is at.
+const _schoolYears = <(String, int, int)>[
+  ('Pre-K', 3, 3),
+  ('FS1 / KG1', 4, 4),
+  ('FS2 / KG2', 5, 5),
+  ('Year 1', 6, 6),
+  ('Year 2', 7, 7),
+  ('Year 3', 8, 8),
+  ('Year 4', 9, 9),
+  ('Year 5', 10, 10),
+  ('Year 6', 11, 11),
+  ('Year 7', 12, 12),
+  ('Year 8', 13, 13),
+  ('Year 9', 14, 14),
+  ('Year 10', 15, 15),
+  ('Year 11', 16, 16),
+  ('Year 12', 17, 18),
+];
+
 class _ResultsScreenState extends State<ResultsScreen> {
   late final Set<String> _filters = {if (widget.initialOpen) 'open'};
   late String? _catId = widget.catId;
-  late String _subcat = widget.initialSubcat ?? '';
+  late final Set<String> _subcats = {
+    if ((widget.initialSubcat ?? '').isNotEmpty) widget.initialSubcat!
+  };
   int? _ageBand;
   int _areaSel = -1; // -1 = my area, -2 = all areas, >=0 = specific area
   String _sort = 'rec'; // rec | rating | near
@@ -291,12 +313,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
     var list = kBusinesses
         .where((b) => _catId == null || b.cat == _catId)
         .where((b) => _areaSel == -2 || b.area == areaIdx)
-        .where((b) => _subcat.isEmpty || b.subcat == _subcat)
+        // A listing matches if it carries ANY of the selected subcategories,
+        // so "English+French" shows under both English and Français.
+        .where((b) => _subcats.isEmpty || _subcats.any(b.hasSubcat))
         .where((b) {
           if (_ageBand == null) return true;
           final r = b.ageRange;
           if (r == null) return true; // unknown ages are never excluded
-          final band = _ageBands[_ageBand!];
+          final bands = _isSchools ? _schoolYears : _ageBands;
+          final band = bands[_ageBand!];
           return r.$1 <= band.$3 && r.$2 >= band.$2;
         })
         .where((b) => !_filters.contains('ver') || b.verified)
@@ -305,14 +330,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
             !_filters.contains('off') ||
             b.offer ||
             kOffers.any((o) => o.bizId == b.id))
-        .where((b) => !_filters.contains('near') || b.drive <= 15)
+        // Item 11: drive == 0 means "not recorded", not "zero minutes away".
+        .where((b) =>
+            !_filters.contains('near') || (b.drive > 0 && b.drive <= 15))
         .toList()
       ..sort((a, b) {
         switch (_sort) {
           case 'rating':
             return b.rating.compareTo(a.rating);
           case 'near':
-            return a.drive.compareTo(b.drive);
+            // unknown durations sort last instead of first
+            final ad = a.drive > 0 ? a.drive : 9999;
+            final bd = b.drive > 0 ? b.drive : 9999;
+            return ad.compareTo(bd);
           default:
             final s = (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0);
             return s != 0 ? s : b.rating.compareTo(a.rating);
@@ -328,9 +358,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(subcatById(_catId ?? '', _subcat)?.name(app.lang)
-            ?? cat?.name(app.lang)
-            ?? app.t('results')),
+        title: Text(_subcats.length == 1
+            ? (subcatById(_catId ?? '', _subcats.first)?.name(app.lang)
+                ?? cat?.name(app.lang)
+                ?? app.t('results'))
+            : (cat?.name(app.lang) ?? app.t('results'))),
         actions: [
           if (canCompare)
             IconButton(
@@ -369,8 +401,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 icon: Icons.child_care_rounded,
                 label: _ageBand == null
                     ? (_isSchools ? app.t('filterSchoolYear') : app.t('filterAge'))
-                    : '${_isSchools ? app.t('schoolYear') : app.t('ages')} '
-                        '${_ageBands[_ageBand!].$1}',
+                    : (_isSchools
+                        ? _schoolYears[_ageBand!].$1
+                        : '${app.t('ages')} ${_ageBands[_ageBand!].$1}'),
                 selected: _ageBand != null,
                 onTap: _pickAge,
               ),
@@ -397,9 +430,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     _SubcatCard(
                       catId: _catId ?? '',
                       sub: s,
-                      selected: _subcat == s.id,
-                      onTap: () => setState(
-                          () => _subcat = _subcat == s.id ? '' : s.id),
+                      selected: _subcats.contains(s.id),
+                      onTap: () => setState(() => _subcats.contains(s.id)
+                          ? _subcats.remove(s.id)
+                          : _subcats.add(s.id)),
                     ),
                 ],
               ),
@@ -413,14 +447,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 children: [
                   _chip(
                       label: app.t('subcatAll'),
-                      selected: _subcat.isEmpty,
-                      onTap: () => setState(() => _subcat = '')),
+                      selected: _subcats.isEmpty,
+                      onTap: () => setState(() => _subcats.clear())),
                   for (final s in subs)
                     _chip(
                         label: s.name(app.lang),
-                        selected: _subcat == s.id,
-                        onTap: () => setState(
-                            () => _subcat = _subcat == s.id ? '' : s.id)),
+                        selected: _subcats.contains(s.id),
+                        onTap: () => setState(() => _subcats.contains(s.id)
+                            ? _subcats.remove(s.id)
+                            : _subcats.add(s.id))),
                 ],
               ),
             ),
@@ -490,7 +525,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       selected: _catId == null ? -1 : cats.indexWhere((c) => c.id == _catId),
       onPick: (v) => setState(() {
         _catId = v == -1 ? null : cats[v].id;
-        _subcat = '';
+        _subcats.clear();
         _dropFiltersMissingFrom(_catId);
       }),
     );
@@ -502,8 +537,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
       title: app.t('filterAge'),
       options: [
         (app.t('anyAge'), -1),
-        for (var i = 0; i < _ageBands.length; i++)
-          ('${_isSchools ? app.t('schoolYear') : app.t('ages')} ${_ageBands[i].$1}', i),
+        if (_isSchools)
+          for (var i = 0; i < _schoolYears.length; i++)
+            (_schoolYears[i].$1, i)
+        else
+          for (var i = 0; i < _ageBands.length; i++)
+            ('${app.t('ages')} ${_ageBands[i].$1}', i),
       ],
       selected: _ageBand ?? -1,
       onPick: (v) => setState(() => _ageBand = v == -1 ? null : v),
