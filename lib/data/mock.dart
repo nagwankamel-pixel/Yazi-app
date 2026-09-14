@@ -113,7 +113,7 @@ const _langSubcats = [
   Subcat('english', 'English', 'إنجليزي', asset: 'sub_english'),
   Subcat('french', 'Français', 'فرنساوي', asset: 'sub_french'),
   // Present in the data ("English+Arabic") but was missing from the picker.
-  Subcat('arabic', 'العربية', 'عربي'),
+  Subcat('arabic', 'Arabic', 'عربي', asset: 'sub_arabic'),
 ];
 
 const kSubcats = <String, List<Subcat>>{
@@ -125,12 +125,13 @@ const kSubcats = <String, List<Subcat>>{
     Subcat('pool', 'Pool', 'حمام سباحة', asset: 'sub_pool'),
   ],
   'birthdays': [
-    // Indoor, Outdoor and Pool merged into one subcategory.
-    Subcat('playarea', 'Play Area', 'منطقة لعب', asset: 'sub_indoor'),
-    Subcat('giveaways', 'Giveaways', 'توزيعات'),
-    Subcat('cakes', 'Cakes', 'تورتات'),
-    Subcat('decoration', 'Decoration', 'ديكور'),
-    Subcat('programs', 'Programs', 'برامج وفقرات'),
+    // One Play Area tile that covers indoor, outdoor and pool venues.
+    Subcat('playarea', 'Play Area', 'منطقة لعب', asset: 'sub_indoor',
+        icon: Icons.celebration_rounded),
+    Subcat('giveaways', 'Giveaways', 'توزيعات', icon: Icons.card_giftcard_rounded),
+    Subcat('cakes', 'Cakes', 'تورتات', icon: Icons.cake_rounded),
+    Subcat('decoration', 'Decoration', 'ديكور', icon: Icons.auto_awesome_rounded),
+    Subcat('programs', 'Programs', 'برامج وفقرات', icon: Icons.theater_comedy_rounded),
   ],
   'sports': [
     Subcat('robotics', 'Robotics', 'روبوتيكس', icon: Icons.smart_toy_rounded),

@@ -297,6 +297,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// Schools hide the "Open now" / "Offers" chips and say "Year" not "Ages".
   bool get _isSchools => _catId == 'schools';
 
+  /// Free-text search within the current category.
+  final _searchCtl = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() {
+    _searchCtl.dispose();
+    super.dispose();
+  }
+
   /// Filters that do not exist on the Schools screen must not survive a
   /// category switch, or they keep filtering invisibly.
   void _dropFiltersMissingFrom(String? catId) {
@@ -316,6 +326,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
         // A listing matches if it carries ANY of the selected subcategories,
         // so "English+French" shows under both English and Français.
         .where((b) => _subcats.isEmpty || _subcats.any(b.hasSubcat))
+        .where((b) {
+          if (_q.isEmpty) return true;
+          final q = _q.toLowerCase();
+          return b.nameEn.toLowerCase().contains(q) ||
+              b.nameAr.contains(_q) ||
+              b.keywords.toLowerCase().contains(q);
+        })
         .where((b) {
           if (_ageBand == null) return true;
           final r = b.ageRange;
@@ -373,6 +390,36 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ],
       ),
       body: Column(children: [
+        // Search inside whatever category is open.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: TextField(
+            controller: _searchCtl,
+            onChanged: (v) => setState(() => _q = v.trim()),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: app.t('searchPh'),
+              prefixIcon:
+                  const Icon(Icons.search_rounded, size: 20, color: Yozi.muted),
+              suffixIcon: _q.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      onPressed: () {
+                        _searchCtl.clear();
+                        setState(() => _q = '');
+                      }),
+              filled: true,
+              fillColor: Yozi.surface,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(Yozi.rMd),
+                  borderSide: BorderSide.none),
+            ),
+          ),
+        ),
         SizedBox(
           height: 48,
           child: ListView(
