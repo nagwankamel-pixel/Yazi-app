@@ -94,10 +94,9 @@ class HomeScreen extends StatelessWidget {
     final seasonImg = absUrl(season['image']?.toString());
     final seasonEmoji = (season['emoji'] ?? '🏫').toString();
 
-    return RefreshIndicator(
-      color: Yozi.violet,
-      onRefresh: () => repo.refresh(),
-      child: ListView(padding: const EdgeInsets.only(bottom: 24), children: [
+    // Item 6: the hero (logo, area picker, greeting) and the search box are
+    // pinned. Only the content below them scrolls.
+    return Column(children: [
       // ---- gradient hero: header + greeting (light pink -> light blue) ----
       Container(
         decoration: const BoxDecoration(
@@ -205,6 +204,14 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+      // ---- everything below here scrolls ----
+      Expanded(
+        child: RefreshIndicator(
+          color: Yozi.violet,
+          onRefresh: () => repo.refresh(),
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
       // ---- quick chips ----
       SizedBox(
         height: 52,
@@ -442,8 +449,11 @@ class HomeScreen extends StatelessWidget {
             child: Text('${app.t('protoNote')} · v$kAppVersion',
                 style: const TextStyle(fontSize: 11, color: Yozi.faint))),
       ),
-    ]),
-    );
+            ],
+          ),
+        ),
+      ),
+    ]);
   }
 }
 

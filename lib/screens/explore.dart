@@ -272,6 +272,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
   int _areaSel = -1; // -1 = my area, -2 = all areas, >=0 = specific area
   String _sort = 'rec'; // rec | rating | near
 
+  /// Schools hide the "Open now" / "Offers" chips and say "Year" not "Ages".
+  bool get _isSchools => _catId == 'schools';
+
+  /// Filters that do not exist on the Schools screen must not survive a
+  /// category switch, or they keep filtering invisibly.
+  void _dropFiltersMissingFrom(String? catId) {
+    if (catId == 'schools') _filters.removeAll({'open', 'off'});
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -359,14 +368,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
               _chip(
                 icon: Icons.child_care_rounded,
                 label: _ageBand == null
-                    ? app.t('filterAge')
-                    : '${app.t('ages')} ${_ageBands[_ageBand!].$1}',
+                    ? (_isSchools ? app.t('filterSchoolYear') : app.t('filterAge'))
+                    : '${_isSchools ? app.t('schoolYear') : app.t('ages')} '
+                        '${_ageBands[_ageBand!].$1}',
                 selected: _ageBand != null,
                 onTap: _pickAge,
               ),
               _filterChip('ver', Icons.verified_rounded, app.t('verifiedOnly')),
-              _filterChip('open', Icons.schedule_rounded, app.t('openNow')),
-              _filterChip('off', Icons.local_activity_rounded, app.t('hasOffer')),
+              // Item 7: "Open now" and "Offers" are not shown for Schools.
+              if (!_isSchools) ...[
+                _filterChip('open', Icons.schedule_rounded, app.t('openNow')),
+                _filterChip('off', Icons.local_activity_rounded, app.t('hasOffer')),
+              ],
               _filterChip('near', Icons.near_me_rounded, app.t('nearMe')),
             ],
           ),
@@ -478,6 +491,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       onPick: (v) => setState(() {
         _catId = v == -1 ? null : cats[v].id;
         _subcat = '';
+        _dropFiltersMissingFrom(_catId);
       }),
     );
   }
@@ -489,7 +503,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       options: [
         (app.t('anyAge'), -1),
         for (var i = 0; i < _ageBands.length; i++)
-          ('${app.t('ages')} ${_ageBands[i].$1}', i),
+          ('${_isSchools ? app.t('schoolYear') : app.t('ages')} ${_ageBands[i].$1}', i),
       ],
       selected: _ageBand ?? -1,
       onPick: (v) => setState(() => _ageBand = v == -1 ? null : v),

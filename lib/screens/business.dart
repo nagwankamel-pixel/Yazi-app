@@ -200,7 +200,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           : openUrl(context, 'tel:${_phone(biz)}')),
                   _Action(
                       icon: Icons.chat_rounded,
-                      label: app.t('whatsapp'),
+                      label: '',
+                      tooltip: app.t('whatsapp'),
                       color: Yozi.mint,
                       onTap: () => _phone(biz) == null
                           ? showToast(context, app.t('reqSent'))
@@ -216,7 +217,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                               : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(biz.nameEn)}')),
                   _Action(
                       icon: Icons.facebook_rounded,
-                      label: app.t('facebook'),
+                      label: '',
+                      tooltip: app.t('facebook'),
                       color: const Color(0xFF1877F2),
                       onTap: () => openUrl(
                           context,
@@ -225,7 +227,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                               : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
                   _Action(
                       icon: Icons.camera_alt_rounded,
-                      label: app.t('instagram'),
+                      label: '',
+                      tooltip: app.t('instagram'),
                       color: const Color(0xFFE1306C),
                       onTap: () => openUrl(
                           context,
@@ -235,7 +238,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                 ]),
               ),
               // school admissions: notify-me + application link
-              if (biz.isSchool) _AdmissionsBlock(
+              if (biz.cat == 'schools') _AdmissionsBlock(
                   biz: biz, busy: _busy, onNotify: () => _toggleNotify(biz)),
               if (biz.about(app.lang).isNotEmpty)
                 _Block(title: app.t('about'),
@@ -343,18 +346,28 @@ class _Action extends StatelessWidget {
       {required this.icon,
       required this.label,
       required this.onTap,
-      this.color});
+      this.color,
+      this.tooltip});
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final Color? color;
+
+  /// When [label] is empty the button shows the icon only. [tooltip] is then
+  /// used for the accessibility label and the long-press tooltip.
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
+        child: Tooltip(
+          message: tooltip ?? label,
+          child: Semantics(
+            button: true,
+            label: tooltip ?? label,
+            child: Material(
           color: Yozi.surface,
           borderRadius: BorderRadius.circular(Yozi.rSm),
           child: InkWell(
@@ -366,19 +379,23 @@ class _Action extends StatelessWidget {
                   border: Border.all(color: Yozi.line),
                   borderRadius: BorderRadius.circular(Yozi.rSm)),
               child: Column(children: [
-                Icon(icon, size: 19, color: color ?? Yozi.ink2),
-                const SizedBox(height: 6),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(label,
-                      maxLines: 1,
-                      style: TextStyle(
-                          fontSize: 10.5,
-                          height: 1.4,
-                          fontWeight: FontWeight.w700,
-                          color: color ?? Yozi.ink2)),
-                ),
+                Icon(icon, size: label.isEmpty ? 22 : 19, color: color ?? Yozi.ink2),
+                if (label.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(label,
+                        maxLines: 1,
+                        style: TextStyle(
+                            fontSize: 10.5,
+                            height: 1.4,
+                            fontWeight: FontWeight.w700,
+                            color: color ?? Yozi.ink2)),
+                  ),
+                ],
               ]),
+            ),
+          ),
             ),
           ),
         ),
