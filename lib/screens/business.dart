@@ -178,17 +178,21 @@ class _BusinessScreenState extends State<BusinessScreen> {
                                           : Yozi.coral)),
                             ],
                           ]),
-                      const SizedBox(height: 4),
-                      Text.rich(TextSpan(children: [
-                        TextSpan(
-                            text: '${app.t('ages')}: ',
-                            style: const TextStyle(
-                                fontSize: 13, color: Yozi.muted)),
-                        TextSpan(
-                            text: biz.ages,
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w800)),
-                      ])),
+                      if (biz.ageLabel.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text.rich(TextSpan(children: [
+                          TextSpan(
+                              text: biz.cat == 'schools'
+                                  ? '${app.t('schoolYear')}: '
+                                  : '${app.t('ages')}: ',
+                              style: const TextStyle(
+                                  fontSize: 13, color: Yozi.muted)),
+                          TextSpan(
+                              text: biz.ageLabel,
+                              style: const TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w800)),
+                        ])),
+                      ],
                     ]),
               ),
               // actions — call / whatsapp / directions / facebook / instagram
@@ -202,15 +206,24 @@ class _BusinessScreenState extends State<BusinessScreen> {
                       onTap: () => _phone(biz) == null
                           ? showToast(context, '📞 ${app.t('calling')}')
                           : openUrl(context, 'tel:${_phone(biz)}')),
-                  _Action(
-                      icon: FontAwesomeIcons.whatsapp,
-                      label: '',
-                      tooltip: app.t('whatsapp'),
-                      color: Yozi.mint,
-                      onTap: () => _phone(biz) == null
-                          ? showToast(context, app.t('reqSent'))
-                          : openUrl(context,
-                              'https://wa.me/${_intl(_phone(biz)!)}')),
+                  // Schools use phone / website / Instagram / directions only.
+                  if (biz.cat != 'schools')
+                    _Action(
+                        icon: FontAwesomeIcons.whatsapp,
+                        label: '',
+                        tooltip: app.t('whatsapp'),
+                        color: Yozi.mint,
+                        onTap: () => _phone(biz) == null
+                            ? showToast(context, app.t('reqSent'))
+                            : openUrl(context,
+                                'https://wa.me/${_intl(_phone(biz)!)}')),
+                  if (biz.cat == 'schools' && biz.website?.isNotEmpty == true)
+                    _Action(
+                        icon: Icons.language_rounded,
+                        label: '',
+                        tooltip: app.t('website'),
+                        color: Yozi.violet,
+                        onTap: () => openUrl(context, biz.website!)),
                   _Action(
                       icon: Icons.near_me_rounded,
                       label: '',
@@ -220,7 +233,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           biz.lat != null
                               ? 'https://www.google.com/maps/search/?api=1&query=${biz.lat},${biz.lng}'
                               : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(biz.nameEn)}')),
-                  _Action(
+                  if (biz.cat != 'schools')
+                    _Action(
                       icon: FontAwesomeIcons.facebookF,
                       label: '',
                       tooltip: app.t('facebook'),

@@ -256,12 +256,15 @@ class ResultsScreen extends StatefulWidget {
   State<ResultsScreen> createState() => _ResultsScreenState();
 }
 
-/// Age filter bands shown as choices: (label, min age, max age).
+/// Nursery age bands, in MONTHS: (label, min months, max months).
+/// Nurseries take children from about 3 months to 5 years, so the bands are
+/// fine-grained at the bottom where the difference actually matters.
 const _ageBands = <(String, int, int)>[
-  ('0–2', 0, 2),
-  ('3–5', 3, 5),
-  ('6–9', 6, 9),
-  ('10+', 10, 99),
+  ('3–12 months', 3, 12),
+  ('1–2 years', 12, 24),
+  ('2–3 years', 24, 36),
+  ('3–4 years', 36, 48),
+  ('4+ years', 48, 999),
 ];
 
 /// School year levels, with the ages they normally cover. Schools filter by
@@ -335,11 +338,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
         })
         .where((b) {
           if (_ageBand == null) return true;
-          final r = b.ageRange;
-          if (r == null) return true; // unknown ages are never excluded
-          final bands = _isSchools ? _schoolYears : _ageBands;
-          final band = bands[_ageBand!];
-          return r.$1 <= band.$3 && r.$2 >= band.$2;
+          if (_isSchools) {
+            final r = b.ageRange;
+            if (r == null) return true;
+            final band = _schoolYears[_ageBand!];
+            return r.$1 <= band.$3 && r.$2 >= band.$2;
+          }
+          // Nurseries compare in months against the stored month columns.
+          final lo = b.minAgeMonths, hi = b.maxAgeMonths;
+          if (lo == null && hi == null) return true; // unknown, never excluded
+          final band = _ageBands[_ageBand!];
+          return (lo ?? 0) <= band.$3 && (hi ?? 9999) >= band.$2;
         })
         .where((b) => !_filters.contains('ver') || b.verified)
         .where((b) => !_filters.contains('open') || b.isOpenNow)
@@ -450,7 +459,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     ? (_isSchools ? app.t('filterSchoolYear') : app.t('filterAge'))
                     : (_isSchools
                         ? _schoolYears[_ageBand!].$1
-                        : '${app.t('ages')} ${_ageBands[_ageBand!].$1}'),
+                        : _ageBands[_ageBand!].$1),
                 selected: _ageBand != null,
                 onTap: _pickAge,
               ),
@@ -466,7 +475,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ),
         // subcategory picker — 3D artwork where we have it (languages, indoor…)
         if (subs.isNotEmpty)
-          if (subs.any((s) => s.asset != null))
+          // Always tiles (Glow style). _SubcatCard falls back to the icon when
+          // a subcategory has no 3D artwork yet.
+          if (true)
             SizedBox(
               height: 96,
               child: ListView(
@@ -589,7 +600,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             (_schoolYears[i].$1, i)
         else
           for (var i = 0; i < _ageBands.length; i++)
-            ('${app.t('ages')} ${_ageBands[i].$1}', i),
+            (_ageBands[i].$1, i),
       ],
       selected: _ageBand ?? -1,
       onPick: (v) => setState(() => _ageBand = v == -1 ? null : v),

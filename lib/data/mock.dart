@@ -116,9 +116,18 @@ const _langSubcats = [
   Subcat('arabic', 'Arabic', 'عربي', asset: 'sub_arabic'),
 ];
 
+/// Curriculum / system, schools only. Combines with the language subcategories
+/// so "IB + French" narrows on both.
+const _curricula = [
+  Subcat('ib', 'IB', 'البكالوريا الدولية', icon: Icons.public_rounded),
+  Subcat('ig', 'IG', 'الثانوية البريطانية', icon: Icons.school_rounded),
+  Subcat('american', 'American', 'أمريكي', icon: Icons.flag_rounded),
+  Subcat('national', 'National', 'وطني', icon: Icons.account_balance_rounded),
+];
+
 const kSubcats = <String, List<Subcat>>{
   'nurseries': _langSubcats,
-  'schools': _langSubcats,
+  'schools': [..._langSubcats, ..._curricula],
   'play': [
     Subcat('indoor', 'Indoor', 'داخلي', asset: 'sub_indoor'),
     Subcat('outdoor', 'Outdoor', 'خارجي', asset: 'sub_outdoor'),
@@ -128,20 +137,16 @@ const kSubcats = <String, List<Subcat>>{
     // One Play Area tile that covers indoor, outdoor and pool venues.
     Subcat('playarea', 'Play Area', 'منطقة لعب', asset: 'sub_indoor',
         icon: Icons.celebration_rounded),
-    Subcat('giveaways', 'Giveaways', 'توزيعات', icon: Icons.card_giftcard_rounded),
-    Subcat('cakes', 'Cakes', 'تورتات', icon: Icons.cake_rounded),
-    Subcat('decoration', 'Decoration', 'ديكور', icon: Icons.auto_awesome_rounded),
+    Subcat('giveaways', 'Giveaways', 'توزيعات', asset: 'sub_giveaways', icon: Icons.card_giftcard_rounded),
+    Subcat('cakes', 'Cakes', 'تورتات', asset: 'sub_cakes', icon: Icons.cake_rounded),
+    Subcat('decoration', 'Decoration', 'ديكور', asset: 'sub_decoration', icon: Icons.auto_awesome_rounded),
     Subcat('programs', 'Programs', 'برامج وفقرات', icon: Icons.theater_comedy_rounded),
   ],
-  'sports': [
-    Subcat('robotics', 'Robotics', 'روبوتيكس', icon: Icons.smart_toy_rounded),
-    Subcat('art', 'Art', 'فنون', icon: Icons.palette_rounded),
-    Subcat('quran', 'Quran', 'قرآن', icon: Icons.menu_book_rounded),
-    Subcat('music', 'Music', 'موسيقى', icon: Icons.music_note_rounded),
-    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية',
-        icon: Icons.home_rounded),
-  ],
   'activities': [
+    Subcat('robotics', 'Robotics', 'روبوتيكس', asset: 'sub_robotics', icon: Icons.smart_toy_rounded),
+    Subcat('art', 'Art', 'فنون', asset: 'sub_art', icon: Icons.palette_rounded),
+    Subcat('quran', 'Quran', 'قرآن', asset: 'sub_quran', icon: Icons.menu_book_rounded),
+    Subcat('music', 'Music', 'موسيقى', asset: 'sub_music', icon: Icons.music_note_rounded),
     Subcat('home_activities', 'Home Activities', 'أنشطة منزلية',
         icon: Icons.home_rounded),
   ],
@@ -353,6 +358,19 @@ class Business {
       .toSet();
 
   bool hasSubcat(String id) => subcatIds.contains(id.trim().toLowerCase());
+
+  /// What to print for ages. Prefers the numeric month columns and formats
+  /// them sensibly; falls back to the old free-text field.
+  String get ageLabel {
+    final lo = minAgeMonths, hi = maxAgeMonths;
+    if (lo == null && hi == null) return ages;
+    String fmt(int m) => m < 24
+        ? '$m months'
+        : (m % 12 == 0 ? '${m ~/ 12} years' : '${(m / 12).toStringAsFixed(1)} years');
+    if (lo != null && hi != null) return '${fmt(lo)} – ${fmt(hi)}';
+    if (lo != null) return '${fmt(lo)}+';
+    return 'up to ${fmt(hi!)}';
+  }
 
   (int, int)? get ageRange {
     // Prefer the numeric months columns — the old free-text field read
