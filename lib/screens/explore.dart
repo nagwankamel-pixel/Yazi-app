@@ -301,6 +301,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// Schools hide the "Open now" / "Offers" chips and say "Year" not "Ages".
   bool get _isSchools => _catId == 'schools';
 
+  /// Categories whose subcategories are browsed as a full screen of tiles
+  /// rather than used as filters.
+  bool get _isTileCat => _catId == 'birthdays' || _catId == 'activities';
+
   /// Free-text search within the current category.
   final _searchCtl = TextEditingController();
   String _q = '';
@@ -414,8 +418,24 @@ class _ResultsScreenState extends State<ResultsScreen> {
             )
           : null,
       body: Column(children: [
+        // Inside a subcategory of a tile category, offer a way back to the tiles.
+        if (_isTileCat && _subcats.isNotEmpty)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+              child: TextButton.icon(
+                onPressed: () => setState(() => _subcats.clear()),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: Text(subcatById(_catId ?? '', _subcats.first)
+                        ?.name(app.lang) ??
+                    app.t('back')),
+              ),
+            ),
+          ),
         // Search inside whatever category is open.
-        Padding(
+        if (!(_isTileCat && _subcats.isEmpty))
+          Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: TextField(
             controller: _searchCtl,
@@ -490,8 +510,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ),
         // Subcategory picker — two-column cards, artwork left, label right.
         if (subs.isNotEmpty)
-          // Birthdays and Activities use the Glow-style 2-column grid.
-          if (_catId == 'birthdays' || _catId == 'activities')
+          // Birthdays and Activities: the grid IS the screen. Tapping a tile
+          // opens that subcategory rather than filtering the list below.
+          if (_isTileCat && _subcats.isEmpty)
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.45,
+                  children: [
+                    for (final s in subs)
+                      _SubcatWideCard(
+                        catId: _catId ?? '',
+                        sub: s,
+                        selected: false,
+                        onTap: () => setState(() => _subcats
+                          ..clear()
+                          ..add(s.id)),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          else if (_catId == 'birthdays' || _catId == 'activities')
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: GridView.count(

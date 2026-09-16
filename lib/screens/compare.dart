@@ -38,6 +38,10 @@ class _CompareScreenState extends State<NurseryCompareScreen> {
         return ac != bc ? ac - bc : a.nameEn.compareTo(b.nameEn);
       });
 
+    // Search within the sheet — 120 nurseries is too many to scroll.
+    final searchCtl = TextEditingController();
+    var q = '';
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -64,11 +68,54 @@ class _CompareScreenState extends State<NurseryCompareScreen> {
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                controller: searchCtl,
+                autofocus: false,
+                onChanged: (v) => setSheet(() => q = v.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: app.t('searchPh'),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      size: 20, color: Yozi.muted),
+                  suffixIcon: q.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          onPressed: () {
+                            searchCtl.clear();
+                            setSheet(() => q = '');
+                          }),
+                  filled: true,
+                  fillColor: Yozi.ground,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(Yozi.rMd),
+                      borderSide: BorderSide.none),
+                ),
+              ),
+            ),
             Expanded(
-              child: ListView.builder(
-                itemCount: list.length,
+              child: Builder(builder: (_) {
+                final shown = q.isEmpty
+                    ? list
+                    : list
+                        .where((b) =>
+                            b.nameEn.toLowerCase().contains(q) ||
+                            b.nameAr.contains(q))
+                        .toList();
+                if (shown.isEmpty) {
+                  return Center(
+                    child: Text(app.t('noResults'),
+                        style: const TextStyle(color: Yozi.muted)),
+                  );
+                }
+                return ListView.builder(
+                itemCount: shown.length,
                 itemBuilder: (_, i) {
-                  final b = list[i];
+                  final b = shown[i];
                   final on = _picked.contains(b.id);
                   final full = _picked.length >= _maxPicks && !on;
                   return ListTile(
@@ -97,7 +144,8 @@ class _CompareScreenState extends State<NurseryCompareScreen> {
                           },
                   );
                 },
-              ),
+              );
+              }),
             ),
             SafeArea(
               child: Padding(
