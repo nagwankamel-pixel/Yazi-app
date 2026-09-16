@@ -124,7 +124,7 @@ class _CompareScreenState extends State<NurseryCompareScreen> {
     final chosen = _chosen;
 
     return Scaffold(
-      backgroundColor: Yozi.bg,
+      backgroundColor: Yozi.ground,
       appBar: AppBar(
         title: Text(app.t('compareTitle')),
         actions: [
