@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
 import '../data/mock.dart';
+import 'compare.dart';
 import '../widgets/common.dart';
 import 'videos.dart';
 
@@ -394,10 +395,24 @@ class _ResultsScreenState extends State<ResultsScreen> {
             IconButton(
                 tooltip: app.t('compare'),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => CompareScreen(catId: _catId!))),
+                    builder: (_) => _catId == 'nurseries'
+                        ? const NurseryCompareScreen()
+                        : CompareScreen(catId: _catId!))),
                 icon: const Icon(Icons.table_rows_rounded, size: 20)),
         ],
       ),
+      floatingActionButton: _catId == 'nurseries'
+          ? FloatingActionButton.extended(
+              backgroundColor: Yozi.violet,
+              icon: const Icon(Icons.compare_arrows_rounded, color: Colors.white),
+              label: Text(app.t('compareCta'),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w800)),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(
+                      builder: (_) => const NurseryCompareScreen())),
+            )
+          : null,
       body: Column(children: [
         // Search inside whatever category is open.
         Padding(
@@ -473,11 +488,33 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ],
           ),
         ),
-        // subcategory picker — 3D artwork where we have it (languages, indoor…)
+        // Subcategory picker — two-column cards, artwork left, label right.
         if (subs.isNotEmpty)
-          // Always tiles (Glow style). _SubcatCard falls back to the icon when
-          // a subcategory has no 3D artwork yet.
-          if (true)
+          // Birthdays and Activities use the Glow-style 2-column grid.
+          if (_catId == 'birthdays' || _catId == 'activities')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.45,
+                children: [
+                  for (final s in subs)
+                    _SubcatWideCard(
+                      catId: _catId ?? '',
+                      sub: s,
+                      selected: _subcats.contains(s.id),
+                      onTap: () => setState(() => _subcats.contains(s.id)
+                          ? _subcats.remove(s.id)
+                          : _subcats.add(s.id)),
+                    ),
+                ],
+              ),
+            )
+          else if (subs.any((s) => s.asset != null))
             SizedBox(
               height: 96,
               child: ListView(
@@ -896,6 +933,76 @@ class CompareScreen extends StatelessWidget {
           ]),
         ),
       ]),
+    );
+  }
+}
+
+/// Subcategory card: artwork on the left, label on the right, two per row.
+/// Matches the Birthdays / Activities design.
+class _SubcatWideCard extends StatelessWidget {
+  const _SubcatWideCard({
+    required this.catId,
+    required this.sub,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String catId;
+  final Subcat sub;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    return Material(
+      color: Yozi.surface,
+      borderRadius: BorderRadius.circular(Yozi.rMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Yozi.rMd),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Yozi.rMd),
+            border: Border.all(color: selected ? Yozi.violet : Yozi.line),
+          ),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Yozi.violetGhost,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: sub.asset != null
+                  ? Image.asset('assets/icons3d/${sub.asset}.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                          sub.icon ?? Icons.category_rounded,
+                          color: Yozi.violet))
+                  : Icon(sub.icon ?? Icons.category_rounded,
+                      size: 26, color: Yozi.violet),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              sub.name(app.lang),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: selected ? Yozi.violet : Yozi.ink,
+              ),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }

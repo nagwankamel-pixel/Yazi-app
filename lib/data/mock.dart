@@ -119,10 +119,10 @@ const _langSubcats = [
 /// Curriculum / system, schools only. Combines with the language subcategories
 /// so "IB + French" narrows on both.
 const _curricula = [
-  Subcat('ib', 'IB', 'البكالوريا الدولية', icon: Icons.public_rounded),
-  Subcat('ig', 'IG', 'الثانوية البريطانية', icon: Icons.school_rounded),
-  Subcat('american', 'American', 'أمريكي', icon: Icons.flag_rounded),
-  Subcat('national', 'National', 'وطني', icon: Icons.account_balance_rounded),
+  Subcat('ib', 'IB', 'البكالوريا الدولية', asset: 'sub_ib', icon: Icons.public_rounded),
+  Subcat('ig', 'IG', 'الثانوية البريطانية', asset: 'sub_ig', icon: Icons.school_rounded),
+  Subcat('american', 'American', 'أمريكي', asset: 'sub_american', icon: Icons.flag_rounded),
+  Subcat('national', 'National', 'وطني', asset: 'sub_national', icon: Icons.account_balance_rounded),
 ];
 
 const kSubcats = <String, List<Subcat>>{
@@ -140,14 +140,15 @@ const kSubcats = <String, List<Subcat>>{
     Subcat('giveaways', 'Giveaways', 'توزيعات', asset: 'sub_giveaways', icon: Icons.card_giftcard_rounded),
     Subcat('cakes', 'Cakes', 'تورتات', asset: 'sub_cakes', icon: Icons.cake_rounded),
     Subcat('decoration', 'Decoration', 'ديكور', asset: 'sub_decoration', icon: Icons.auto_awesome_rounded),
-    Subcat('programs', 'Programs', 'برامج وفقرات', icon: Icons.theater_comedy_rounded),
+    Subcat('shows', 'Shows', 'عروض', icon: Icons.theater_comedy_rounded),
+    Subcat('catering', 'Catering', 'بوفيه وضيافة', asset: 'sub_catering', icon: Icons.restaurant_rounded),
   ],
   'activities': [
     Subcat('robotics', 'Robotics', 'روبوتيكس', asset: 'sub_robotics', icon: Icons.smart_toy_rounded),
     Subcat('art', 'Art', 'فنون', asset: 'sub_art', icon: Icons.palette_rounded),
     Subcat('quran', 'Quran', 'قرآن', asset: 'sub_quran', icon: Icons.menu_book_rounded),
     Subcat('music', 'Music', 'موسيقى', asset: 'sub_music', icon: Icons.music_note_rounded),
-    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية',
+    Subcat('home_activities', 'Home Activities', 'أنشطة منزلية', asset: 'sub_home_activities',
         icon: Icons.home_rounded),
   ],
   'firstdays': [
@@ -220,6 +221,8 @@ class Business {
     required this.ages,
     this.minAgeMonths,
     this.maxAgeMonths,
+    this.cmp = const {},
+    this.workingHours,
     required this.verified,
     this.sponsored = false,
     this.offer = false,
@@ -254,6 +257,25 @@ class Business {
   /// Age range in months. Set from the admin panel; preferred over the old
   /// free-text [ages] field, which mixed months and years.
   final int? minAgeMonths, maxAgeMonths;
+
+  /// Nursery comparison facts, keyed by field id. Only set for nurseries.
+  final Map<String, bool> cmp;
+  final String? workingHours;
+
+  /// The fields parents compare on, in display order.
+  static const compareFields = <(String, String, String)>[
+    ('cmp_bus', 'Bus', '🚌'),
+    ('cmp_pool', 'Pool', '🏊'),
+    ('cmp_doctor', 'Doctor', '🩺'),
+    ('cmp_extra_hours', 'Extra hours', '⏰'),
+    ('cmp_meals', 'Meals', '🍽️'),
+    ('cmp_etiquette', 'Etiquette', '✨'),
+    ('cmp_live_camera', 'Live camera', '📹'),
+  ];
+
+  /// True when anything at all has been recorded, so the app can avoid
+  /// showing a row of empty ticks for a nursery nobody has filled in.
+  bool get hasCompareData => cmp.values.any((v) => v) || (workingHours ?? '').isNotEmpty;
   final int area, drive, reviews;
   final double rating;
   final bool verified, sponsored, offer, open;
@@ -317,6 +339,10 @@ class Business {
       ages: j['ages'] ?? '',
       minAgeMonths: (j['min_age_months'] as num?)?.toInt(),
       maxAgeMonths: (j['max_age_months'] as num?)?.toInt(),
+      cmp: {
+        for (final f in Business.compareFields) f.$1: _b(j[f.$1]),
+      },
+      workingHours: j['cmp_working_hours'] as String?,
       verified: _b(j['verified']),
       sponsored: _b(j['sponsored']), offer: _b(j['offer']),
       priceEn: j['price_en'] ?? '', priceAr: j['price_ar'] ?? j['price_en'] ?? '',
