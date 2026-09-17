@@ -36,6 +36,21 @@ Color _hex(String? s, int fallback) {
 }
 
 bool _b(dynamic v) => v == true || v == 1;
+
+/// Numbers that survive bad data. A column holding the text "null" — which the
+/// admin panel and Excel import have both produced — used to throw here and
+/// abort the whole payload, silently costing the app hundreds of listings.
+int? _i(dynamic v) {
+  if (v is num) return v.toInt();
+  if (v is String) return int.tryParse(v.trim()) ?? double.tryParse(v.trim())?.toInt();
+  return null;
+}
+
+double? _d(dynamic v) {
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v.trim());
+  return null;
+}
 List<dynamic> _jsonList(dynamic v) {
   if (v is List) return v;
   if (v is String && v.isNotEmpty) {
@@ -156,6 +171,7 @@ const kSubcats = <String, List<Subcat>>{
     Subcat('newmom', 'New Mom', 'ماما جديدة'),
   ],
   'healthcare': [
+    Subcat('hospital', 'Hospitals', 'مستشفيات', icon: Icons.local_hospital_rounded),
     Subcat('pediatrician', 'Pediatrician', 'طبيب أطفال'),
     Subcat('dentist', 'Dentist', 'طبيب أسنان'),
     Subcat('therapy', 'Therapy', 'علاج طبيعي وتخاطب'),
@@ -332,17 +348,17 @@ class Business {
   factory Business.fromJson(Map<String, dynamic> j) => Business(
       id: j['id'], cat: j['cat'] ?? 'activities', grad: j['grad'] ?? 'violet',
       nameEn: j['name_en'] ?? '', nameAr: (j['name_ar'] ?? '') == '' ? (j['name_en'] ?? '') : j['name_ar'],
-      area: (j['area'] as num?)?.toInt() ?? 0,
-      drive: (j['drive'] as num?)?.toInt() ?? 0,
-      rating: (j['rating'] as num?)?.toDouble() ?? 0,
-      reviews: (j['reviews'] as num?)?.toInt() ?? 0,
+      area: _i(j['area']) ?? 0,
+      drive: _i(j['drive']) ?? 0,
+      rating: _d(j['rating']) ?? 0,
+      reviews: _i(j['reviews']) ?? 0,
       ages: j['ages'] ?? '',
-      minAgeMonths: (j['min_age_months'] as num?)?.toInt(),
-      maxAgeMonths: (j['max_age_months'] as num?)?.toInt(),
+      minAgeMonths: _i(j['min_age_months']),
+      maxAgeMonths: _i(j['max_age_months']),
       cmp: {
         for (final f in Business.compareFields) f.$1: _b(j[f.$1]),
       },
-      workingHours: j['cmp_working_hours'] as String?,
+      workingHours: j['cmp_working_hours']?.toString(),
       verified: _b(j['verified']),
       sponsored: _b(j['sponsored']), offer: _b(j['offer']),
       priceEn: j['price_en'] ?? '', priceAr: j['price_ar'] ?? j['price_en'] ?? '',
@@ -351,7 +367,7 @@ class Business {
       prices: _jsonList(j['prices_json']).map((x) => PriceRow.fromJson(x)).toList(),
       amenEn: _jsonList(j['amen_en_json']).map((x) => x.toString()).toList(),
       amenAr: _jsonList(j['amen_ar_json']).map((x) => x.toString()).toList(),
-      lat: (j['lat'] as num?)?.toDouble(), lng: (j['lng'] as num?)?.toDouble(),
+      lat: _d(j['lat']), lng: _d(j['lng']),
       subcat: j['subcat'] ?? '',
       phone: j['phone'], website: j['website'],
       facebook: j['facebook'], instagram: j['instagram'],

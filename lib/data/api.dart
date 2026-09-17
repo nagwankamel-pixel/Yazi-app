@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -92,6 +92,30 @@ class DataRepo extends ChangeNotifier {
     return jsonDecode(utf8.decode(r.bodyBytes));
   }
 
+  /// Parse a list defensively. One malformed record must never discard the
+  /// rest of the payload — that cost the app ~220 of 645 listings once, with
+  /// no visible error anywhere.
+  static List<T> _parseAll<T>(
+      dynamic raw, T Function(Map<String, dynamic>) fromJson, String label) {
+    final out = <T>[];
+    var skipped = 0;
+    for (final j in (raw as List? ?? const [])) {
+      try {
+        out.add(fromJson(j as Map<String, dynamic>));
+      } catch (e) {
+        skipped++;
+        if (skipped <= 3) {
+          debugPrint('YAZI: skipped a bad $label record — $e');
+        }
+      }
+    }
+    if (skipped > 0) {
+      debugPrint('YAZI: $skipped of ${(raw as List).length} $label records '
+          'could not be read and were skipped.');
+    }
+    return out;
+  }
+
   void _hydrate(Map<String, dynamic> p) {
     kCats
       ..clear()
@@ -101,7 +125,7 @@ class DataRepo extends ChangeNotifier {
       ..addAll((p['areas'] as List).map((j) => Area.fromJson(j)));
     kBusinesses
       ..clear()
-      ..addAll((p['businesses'] as List).map((j) => Business.fromJson(j)));
+      ..addAll(_parseAll(p['businesses'], Business.fromJson, 'businesses'));
     kEvents
       ..clear()
       ..addAll((p['events'] as List).map((j) => KidsEvent.fromJson(j)));

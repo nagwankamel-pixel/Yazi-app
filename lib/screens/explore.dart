@@ -537,7 +537,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
               ),
             )
-          else if (_catId == 'birthdays' || _catId == 'activities')
+          else if (_isTileCat)
+            // Already inside a subcategory: no tiles, no filter row. The back
+            // link above returns to the grid.
+            const SizedBox.shrink()
+          else if (false)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: GridView.count(
