@@ -305,6 +305,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// rather than used as filters.
   bool get _isTileCat => _catId == 'birthdays' || _catId == 'activities';
 
+  /// True while the tile grid is the whole screen: no filters, no banner,
+  /// no results — exactly like the Glow landing page.
+  bool get _showingTiles => _isTileCat && _subcats.isEmpty;
+
   /// Free-text search within the current category.
   final _searchCtl = TextEditingController();
   String _q = '';
@@ -331,9 +335,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
     var list = kBusinesses
         .where((b) => _catId == null || b.cat == _catId)
         .where((b) => _areaSel == -2 || b.area == areaIdx)
-        // A listing matches if it carries ANY of the selected subcategories,
-        // so "English+French" shows under both English and Français.
-        .where((b) => _subcats.isEmpty || _subcats.any(b.hasSubcat))
+        // A listing must carry EVERY selected subcategory: picking English and
+        // Arabic returns only nurseries that teach both, not either.
+        .where((b) => _subcats.isEmpty || _subcats.every(b.hasSubcat))
         .where((b) {
           if (_q.isEmpty) return true;
           final q = _q.toLowerCase();
@@ -434,7 +438,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ),
         // Search inside whatever category is open.
-        if (!(_isTileCat && _subcats.isEmpty))
+        if (!_showingTiles)
           Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: TextField(
@@ -464,7 +468,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ),
         ),
-        SizedBox(
+        if (!_showingTiles)
+          SizedBox(
           height: 48,
           child: ListView(
             scrollDirection: Axis.horizontal,
@@ -512,7 +517,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         if (subs.isNotEmpty)
           // Birthdays and Activities: the grid IS the screen. Tapping a tile
           // opens that subcategory rather than filtering the list below.
-          if (_isTileCat && _subcats.isEmpty)
+          if (_showingTiles)
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -605,8 +610,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
             ),
         // decoration tutorials shortcut inside the Birthdays category
-        if (_catId == 'birthdays') const _DecorVideosBanner(),
-        Padding(
+        if (_catId == 'birthdays' && !_showingTiles) const _DecorVideosBanner(),
+        if (!_showingTiles)
+          Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(children: [
             Text('${list.length} ${app.t('results')}',
@@ -631,16 +637,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ]),
         ),
-        Expanded(
-          child: list.isEmpty
-              ? Center(
-                  child: Text(app.t('noResults'),
-                      style: const TextStyle(
-                          color: Yozi.muted, fontWeight: FontWeight.w700)))
-              : ListView(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  children: list.map((b) => BizCard(b)).toList()),
-        ),
+        if (!_showingTiles)
+          Expanded(
+            child: list.isEmpty
+                ? Center(
+                    child: Text(app.t('noResults'),
+                        style: const TextStyle(
+                            color: Yozi.muted, fontWeight: FontWeight.w700)))
+                : ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: list.map((b) => BizCard(b)).toList()),
+          ),
       ]),
     );
   }

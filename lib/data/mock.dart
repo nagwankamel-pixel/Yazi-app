@@ -137,6 +137,7 @@ const _curricula = [
   Subcat('ib', 'IB', 'البكالوريا الدولية', asset: 'sub_ib', icon: Icons.public_rounded),
   Subcat('ig', 'IG', 'الثانوية البريطانية', asset: 'sub_ig', icon: Icons.school_rounded),
   Subcat('american', 'American', 'أمريكي', asset: 'sub_american', icon: Icons.flag_rounded),
+  Subcat('canadian', 'Canadian', 'كندي', icon: Icons.ac_unit_rounded),
   Subcat('national', 'National', 'وطني', asset: 'sub_national', icon: Icons.account_balance_rounded),
 ];
 
@@ -155,7 +156,7 @@ const kSubcats = <String, List<Subcat>>{
     Subcat('giveaways', 'Giveaways', 'توزيعات', asset: 'sub_giveaways', icon: Icons.card_giftcard_rounded),
     Subcat('cakes', 'Cakes', 'تورتات', asset: 'sub_cakes', icon: Icons.cake_rounded),
     Subcat('decoration', 'Decoration', 'ديكور', asset: 'sub_decoration', icon: Icons.auto_awesome_rounded),
-    Subcat('shows', 'Shows', 'عروض', icon: Icons.theater_comedy_rounded),
+    Subcat('shows', 'Shows', 'عروض', asset: 'sub_shows', icon: Icons.theater_comedy_rounded),
     Subcat('catering', 'Catering', 'بوفيه وضيافة', asset: 'sub_catering', icon: Icons.restaurant_rounded),
   ],
   'activities': [
