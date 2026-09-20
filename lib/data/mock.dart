@@ -137,7 +137,7 @@ const _curricula = [
   Subcat('ib', 'IB', 'البكالوريا الدولية', asset: 'sub_ib', icon: Icons.public_rounded),
   Subcat('ig', 'IG', 'الثانوية البريطانية', asset: 'sub_ig', icon: Icons.school_rounded),
   Subcat('american', 'American', 'أمريكي', asset: 'sub_american', icon: Icons.flag_rounded),
-  Subcat('canadian', 'Canadian', 'كندي', icon: Icons.ac_unit_rounded),
+  Subcat('canadian', 'Canadian', 'كندي', asset: 'sub_canadian', icon: Icons.ac_unit_rounded),
   Subcat('national', 'National', 'وطني', asset: 'sub_national', icon: Icons.account_balance_rounded),
 ];
 

@@ -391,7 +391,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
       'near': app.t('nearest'),
     };
 
-    return Scaffold(
+    return PopScope(
+      // Inside a subcategory, back returns to the tile grid rather than
+      // leaving the category altogether.
+      canPop: !(_isTileCat && _subcats.isNotEmpty),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isTileCat && _subcats.isNotEmpty) {
+          setState(() => _subcats.clear());
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_subcats.length == 1
             ? (subcatById(_catId ?? '', _subcats.first)?.name(app.lang)
@@ -400,13 +409,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
             : (cat?.name(app.lang) ?? app.t('results'))),
         actions: [
           if (canCompare)
-            IconButton(
-                tooltip: app.t('compare'),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: TextButton.icon(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => _catId == 'nurseries'
                         ? const NurseryCompareScreen()
                         : CompareScreen(catId: _catId!))),
-                icon: const Icon(Icons.table_rows_rounded, size: 20)),
+                icon: const Icon(Icons.compare_arrows_rounded, size: 18),
+                label: Text(app.t('compare'),
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            ),
         ],
       ),
       floatingActionButton: _catId == 'nurseries'
@@ -649,6 +663,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     children: list.map((b) => BizCard(b)).toList()),
           ),
       ]),
+      ),
     );
   }
 
