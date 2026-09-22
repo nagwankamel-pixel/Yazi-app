@@ -378,18 +378,12 @@ class HomeScreen extends StatelessWidget {
       // ---- sponsored & new entities (admin → Sponsors & New) ----
       if (kFeatured.isNotEmpty || sponsored.isNotEmpty) ...[
         SectionRow(app.t('sponsoredNew')),
-        if (kFeatured.isNotEmpty)
-          SizedBox(
-            height: 118,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: kFeatured.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) => _FeaturedCard(kFeatured[i]),
-            ),
+        // Full-width, the same size as the sponsored listing cards below.
+        for (final f in kFeatured)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: _FeaturedCard(f),
           ),
-        if (kFeatured.isNotEmpty) const SizedBox(height: 10),
         ...sponsored.take(3).map((b) => BizCard(b)),
       ],
       // ---- premium strip ----
@@ -557,7 +551,7 @@ class _FeaturedCard extends StatelessWidget {
     final biz = f.bizId != null ? bizByIdOrNull(f.bizId!) : null;
     final img = f.image ?? biz?.logo ?? biz?.photoUrl(width: 300);
     return SizedBox(
-      width: 250,
+      width: double.infinity,
       child: Material(
         color: Yozi.surface,
         borderRadius: BorderRadius.circular(Yozi.rMd),
@@ -572,7 +566,7 @@ class _FeaturedCard extends StatelessWidget {
             }
           },
           child: Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
                 border: Border.all(color: Yozi.line),
                 borderRadius: BorderRadius.circular(Yozi.rMd)),
@@ -580,8 +574,8 @@ class _FeaturedCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  width: 78,
-                  height: 78,
+                  width: 96,
+                  height: 96,
                   child: img != null
                       ? Image.network(img,
                           fit: BoxFit.cover,

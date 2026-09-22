@@ -384,7 +384,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
         }
       });
 
-    final canCompare = _catId == 'nurseries' || _catId == 'schools';
+    // Comparison exists for nurseries only.
+    final canCompare = _catId == 'nurseries';
     final sortLabels = {
       'rec': app.t('sortBy'),
       'rating': app.t('topRated'),
@@ -423,18 +424,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
         ],
       ),
-      floatingActionButton: _catId == 'nurseries'
-          ? FloatingActionButton.extended(
-              backgroundColor: Yozi.violet,
-              icon: const Icon(Icons.compare_arrows_rounded, color: Colors.white),
-              label: Text(app.t('compareCta'),
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w800)),
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(
-                      builder: (_) => const NurseryCompareScreen())),
-            )
-          : null,
+
       body: Column(children: [
         // Inside a subcategory of a tile category, offer a way back to the tiles.
         if (_isTileCat && _subcats.isNotEmpty)
@@ -506,7 +496,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   selected: _catId != null,
                   onTap: _pickCategory,
                 ),
-              // age filter
+              // age filter — not for Toys & Gifts, where age isn't recorded
+              if (_catId != 'toys')
               _chip(
                 icon: Icons.child_care_rounded,
                 label: _ageBand == null
