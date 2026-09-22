@@ -58,7 +58,9 @@ class DataRepo extends ChangeNotifier {
         _get('/videos').catchError((_) => <dynamic>[]),
         _get('/featured').catchError((_) => <dynamic>[]),
         _get('/subcat-icons').catchError((_) => <dynamic>[]),
-      ]).timeout(const Duration(seconds: 20));
+      // The listings payload is ~800 KB. On a weak mobile signal 20s wasn't
+      // always enough, and a timeout throws away the entire refresh.
+      ]).timeout(const Duration(seconds: 45));
       final payload = {
         'categories': results[0],
         'areas': results[1],

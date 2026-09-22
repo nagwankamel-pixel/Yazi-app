@@ -40,6 +40,15 @@ bool _b(dynamic v) => v == true || v == 1;
 /// Numbers that survive bad data. A column holding the text "null" — which the
 /// admin panel and Excel import have both produced — used to throw here and
 /// abort the whole payload, silently costing the app hundreds of listings.
+/// A string field, treating blank and the literal text "null" as not set.
+/// The server used to save cleared fields as "null", which made the app show
+/// Website / Call / Instagram buttons that went nowhere.
+String? _s(dynamic v) {
+  if (v == null) return null;
+  final t = v.toString().trim();
+  return t.isEmpty || t.toLowerCase() == 'null' ? null : t;
+}
+
 int? _i(dynamic v) {
   if (v is num) return v.toInt();
   if (v is String) return int.tryParse(v.trim()) ?? double.tryParse(v.trim())?.toInt();
@@ -359,7 +368,7 @@ class Business {
       cmp: {
         for (final f in Business.compareFields) f.$1: _b(j[f.$1]),
       },
-      workingHours: j['cmp_working_hours']?.toString(),
+      workingHours: _s(j['cmp_working_hours']),
       verified: _b(j['verified']),
       sponsored: _b(j['sponsored']), offer: _b(j['offer']),
       priceEn: j['price_en'] ?? '', priceAr: j['price_ar'] ?? j['price_en'] ?? '',
@@ -370,8 +379,8 @@ class Business {
       amenAr: _jsonList(j['amen_ar_json']).map((x) => x.toString()).toList(),
       lat: _d(j['lat']), lng: _d(j['lng']),
       subcat: j['subcat'] ?? '',
-      phone: j['phone'], website: j['website'],
-      facebook: j['facebook'], instagram: j['instagram'],
+      phone: _s(j['phone']), website: _s(j['website']),
+      facebook: _s(j['facebook']), instagram: _s(j['instagram']),
       hasPhoto: (j['photo_ref'] ?? '').toString().isNotEmpty,
       hours: _jsonList(j['hours_json']).map((x) => x.toString()).toList(),
       photos: _jsonList(j['photos_json'])
@@ -380,10 +389,10 @@ class Business {
           .toList(),
       logo: absUrl(j['logo']),
       admissionsOpen: _b(j['admissions_open']),
-      admissionsIntake: (j['admissions_intake'] ?? '').toString().isEmpty
+      admissionsIntake: _s(j['admissions_intake']) == null
           ? null
           : j['admissions_intake'].toString(),
-      applicationUrl: (j['application_url'] ?? '').toString().isEmpty
+      applicationUrl: _s(j['application_url']) == null
           ? null
           : j['application_url'].toString());
 
@@ -505,9 +514,9 @@ class Featured {
       id: j['id'], kind: j['kind'] ?? 'sponsor',
       titleEn: j['title_en'] ?? '', titleAr: j['title_ar'] ?? j['title_en'] ?? '',
       subEn: j['sub_en'] ?? '', subAr: j['sub_ar'] ?? j['sub_en'] ?? '',
-      bizId: (j['biz_id'] ?? '').toString().isEmpty ? null : j['biz_id'].toString(),
-      image: absUrl(j['image']),
-      link: (j['link'] ?? '').toString().isEmpty ? null : j['link'].toString());
+      bizId: _s(j['biz_id']),
+      image: absUrl(_s(j['image'])),
+      link: _s(j['link']));
 
   String title(String lang) => lang == 'ar' ? titleAr : titleEn;
   String sub(String lang) => lang == 'ar' ? subAr : subEn;

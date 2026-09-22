@@ -551,29 +551,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
             // Already inside a subcategory: no tiles, no filter row. The back
             // link above returns to the grid.
             const SizedBox.shrink()
-          else if (false)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.45,
-                children: [
-                  for (final s in subs)
-                    _SubcatWideCard(
-                      catId: _catId ?? '',
-                      sub: s,
-                      selected: _subcats.contains(s.id),
-                      onTap: () => setState(() => _subcats.contains(s.id)
-                          ? _subcats.remove(s.id)
-                          : _subcats.add(s.id)),
-                    ),
-                ],
-              ),
-            )
           else if (subs.any((s) => s.asset != null))
             SizedBox(
               height: 96,
