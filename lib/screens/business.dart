@@ -206,8 +206,9 @@ class _BusinessScreenState extends State<BusinessScreen> {
                       onTap: () => _phone(biz) == null
                           ? showToast(context, '📞 ${app.t('calling')}')
                           : openUrl(context, 'tel:${_phone(biz)}')),
-                  // Schools use phone / website / Instagram / directions only.
-                  if (biz.cat != 'schools')
+                  // Schools: phone / website / Instagram / directions.
+                  // Kids Fashion: no WhatsApp and no Instagram.
+                  if (biz.cat != 'schools' && biz.cat != 'clothes')
                     _Action(
                         icon: FontAwesomeIcons.whatsapp,
                         label: '',
@@ -244,7 +245,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           biz.facebook?.isNotEmpty == true
                               ? biz.facebook!
                               : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
-                  _Action(
+                  if (biz.cat != 'clothes')
+                    _Action(
                       icon: FontAwesomeIcons.instagram,
                       label: '',
                       tooltip: app.t('instagram'),

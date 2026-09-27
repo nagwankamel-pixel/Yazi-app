@@ -257,6 +257,15 @@ class ResultsScreen extends StatefulWidget {
   State<ResultsScreen> createState() => _ResultsScreenState();
 }
 
+/// Age bands for everything that isn't a nursery, in MONTHS so they compare
+/// against the same stored columns. Play areas and activities think in years.
+const _yearBands = <(String, int, int)>[
+  ('0–2 years', 0, 24),
+  ('3–5 years', 36, 60),
+  ('6–9 years', 72, 108),
+  ('10+ years', 120, 999),
+];
+
 /// Nursery age bands, in MONTHS: (label, min months, max months).
 /// Nurseries take children from about 3 months to 5 years, so the bands are
 /// fine-grained at the bottom where the difference actually matters.
@@ -309,6 +318,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// no results — exactly like the Glow landing page.
   bool get _showingTiles => _isTileCat && _subcats.isEmpty;
 
+  /// Nurseries pick from month-level bands; every other category uses years.
+  List<(String, int, int)> get _bands =>
+      _catId == 'nurseries' ? _ageBands : _yearBands;
+
   /// Free-text search within the current category.
   final _searchCtl = TextEditingController();
   String _q = '';
@@ -356,7 +369,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
           // Nurseries compare in months against the stored month columns.
           final lo = b.minAgeMonths, hi = b.maxAgeMonths;
           if (lo == null && hi == null) return true; // unknown, never excluded
-          final band = _ageBands[_ageBand!];
+          final band = _bands[_ageBand!];
           return (lo ?? 0) <= band.$3 && (hi ?? 9999) >= band.$2;
         })
         .where((b) => !_filters.contains('ver') || b.verified)
@@ -504,7 +517,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     ? (_isSchools ? app.t('filterSchoolYear') : app.t('filterAge'))
                     : (_isSchools
                         ? _schoolYears[_ageBand!].$1
-                        : _ageBands[_ageBand!].$1),
+                        : _bands[_ageBand!].$1),
                 selected: _ageBand != null,
                 onTap: _pickAge,
               ),
@@ -676,8 +689,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
           for (var i = 0; i < _schoolYears.length; i++)
             (_schoolYears[i].$1, i)
         else
-          for (var i = 0; i < _ageBands.length; i++)
-            (_ageBands[i].$1, i),
+          for (var i = 0; i < _bands.length; i++)
+            (_bands[i].$1, i),
       ],
       selected: _ageBand ?? -1,
       onPick: (v) => setState(() => _ageBand = v == -1 ? null : v),
