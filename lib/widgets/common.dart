@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -149,16 +150,20 @@ class PlacePhoto extends StatelessWidget {
         radius: radius);
     final url = biz.photoUrl(width: width);
     if (url == null) return fallback;
+    // CachedNetworkImage keeps photos on disk, so reopening the app does not
+    // download them all again. memCacheWidth decodes at the size actually
+    // shown instead of at full resolution.
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: Image.network(
-        url,
+      child: CachedNetworkImage(
+        imageUrl: url,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => fallback,
-        loadingBuilder: (ctx, child, progress) =>
-            progress == null ? child : fallback,
+        memCacheWidth: width * 2,
+        fadeInDuration: const Duration(milliseconds: 120),
+        placeholder: (_, __) => fallback,
+        errorWidget: (_, __, ___) => fallback,
       ),
     );
   }
@@ -468,7 +473,7 @@ class CategoryIcon extends StatelessWidget {
         width: size, height: size, fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => emoji());
     if (cat.iconUrl != null) {
-      return Image.network(cat.iconUrl!,
+      return Image.network(cat.iconUrl!, cacheWidth: 256,
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => bundled());
     }
@@ -496,7 +501,7 @@ class SubcatIcon extends StatelessWidget {
         : fallback();
     final url = subcatIconUrl(catId, sub.id);
     if (url != null) {
-      return Image.network(url,
+      return Image.network(url, cacheWidth: 256,
           width: size, height: size, fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => bundled());
     }

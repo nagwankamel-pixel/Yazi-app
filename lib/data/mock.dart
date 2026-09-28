@@ -351,16 +351,18 @@ class Business {
 
   /// Cover image: uploaded photo first, then the Google place photo.
   /// Null when there is nothing, so callers show the gradient instead.
-  String? photoUrl({int width = 400}) => photos.isNotEmpty
-      ? photos.first
-      : hasPhoto
-          ? '$kApiBase/photo/$id?w=$width'
-          : null;
+  /// Always go through the server's photo route, even for uploaded photos.
+  /// It resizes to the width asked for and caches the result, so a card no
+  /// longer downloads a full-size phone photo to fill a small thumbnail.
+  String? photoUrl({int width = 400}) => (photos.isNotEmpty || hasPhoto || (logo ?? '').isNotEmpty)
+      ? '$kApiBase/photo/$id?w=$width'
+      : null;
 
   /// Every image for the detail gallery.
   List<String> galleryUrls({int width = 800}) => [
-        ...photos,
-        if (hasPhoto) '$kApiBase/photo/$id?w=$width',
+        // Uploaded photos by index, so each one is resized and cached too.
+        for (var i = 0; i < photos.length; i++) '$kApiBase/photo/$id?w=$width&i=$i',
+        if (hasPhoto && photos.isEmpty) '$kApiBase/photo/$id?w=$width',
       ];
 
   /// True when the listing has usable opening hours.

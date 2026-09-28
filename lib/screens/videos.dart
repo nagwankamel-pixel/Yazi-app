@@ -126,7 +126,7 @@ class VideoCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: video.thumb != null && video.thumb!.isNotEmpty
-                      ? Image.network(video.thumb!,
+                      ? Image.network(video.thumb!, cacheWidth: 600,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const _VideoThumb())
                       : const _VideoThumb(),

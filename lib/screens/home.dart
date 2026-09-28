@@ -339,7 +339,7 @@ class HomeScreen extends StatelessWidget {
                     if (seasonImg != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.network(seasonImg,
+                        child: Image.network(seasonImg, cacheWidth: 1200,
                             width: 64, height: 64, fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Text(seasonEmoji,
                                 style: const TextStyle(fontSize: 44))),
@@ -577,7 +577,7 @@ class _FeaturedCard extends StatelessWidget {
                   width: 96,
                   height: 96,
                   child: img != null
-                      ? Image.network(img,
+                      ? Image.network(img, cacheWidth: 400,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => GradThumb(
                               grad: biz?.grad ?? 'violet',

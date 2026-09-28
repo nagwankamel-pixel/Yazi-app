@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -82,14 +83,20 @@ class _BusinessScreenState extends State<BusinessScreen> {
                                     setState(() => _page = i),
                                 children: biz
                                     .galleryUrls()
-                                    .map((u) => Image.network(u,
+                                    .map((u) => CachedNetworkImage(
+                                        imageUrl: u,
+                                        memCacheWidth: 1200,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            GradThumb(
-                                                grad: biz.grad,
-                                                icon: catById(biz.cat).icon,
-                                                size: 64,
-                                                radius: Yozi.rLg)))
+                                        placeholder: (_, __) => GradThumb(
+                                            grad: biz.grad,
+                                            icon: catById(biz.cat).icon,
+                                            size: 64,
+                                            radius: Yozi.rLg),
+                                        errorWidget: (_, __, ___) => GradThumb(
+                                            grad: biz.grad,
+                                            icon: catById(biz.cat).icon,
+                                            size: 64,
+                                            radius: Yozi.rLg)))
                                     .toList(),
                               ),
                             )
