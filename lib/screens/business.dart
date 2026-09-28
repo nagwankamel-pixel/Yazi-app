@@ -178,6 +178,23 @@ class _BusinessScreenState extends State<BusinessScreen> {
                                           : Yozi.coral)),
                             ],
                           ]),
+                      // A play area that hosts parties: say so, with the budget.
+                      if (biz.cat == 'play' && biz.hostsBirthday) ...[
+                        const SizedBox(height: 4),
+                        Text.rich(TextSpan(children: [
+                          TextSpan(
+                              text: '🎂 ${app.t('hostsBirthdays')}',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Yozi.violet)),
+                          if ((biz.birthdayBudget ?? '').isNotEmpty)
+                            TextSpan(
+                                text: '  ·  ${biz.birthdayBudget}',
+                                style: const TextStyle(
+                                    fontSize: 13, color: Yozi.muted)),
+                        ])),
+                      ],
                       if (biz.ageLabel.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text.rich(TextSpan(children: [
@@ -206,9 +223,9 @@ class _BusinessScreenState extends State<BusinessScreen> {
                       onTap: () => _phone(biz) == null
                           ? showToast(context, '📞 ${app.t('calling')}')
                           : openUrl(context, 'tel:${_phone(biz)}')),
-                  // Schools: phone / website / Instagram / directions.
-                  // Kids Fashion: no WhatsApp and no Instagram.
-                  if (biz.cat != 'schools' && biz.cat != 'clothes')
+                  // WhatsApp is hidden where it isn't how people get in touch:
+                  // schools, kids fashion, play areas, toys & gifts.
+                  if (!['schools', 'clothes', 'play', 'toys'].contains(biz.cat))
                     _Action(
                         icon: FontAwesomeIcons.whatsapp,
                         label: '',
@@ -234,7 +251,29 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           biz.lat != null
                               ? 'https://www.google.com/maps/search/?api=1&query=${biz.lat},${biz.lng}'
                               : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(biz.nameEn)}')),
-                  if (biz.cat != 'schools')
+                  // Toys & Gifts: one social button, since a shop has either
+                  // an Instagram or a Facebook page, rarely both.
+                  if (biz.cat == 'toys')
+                    _Action(
+                      icon: biz.instagram?.isNotEmpty == true
+                          ? FontAwesomeIcons.instagram
+                          : FontAwesomeIcons.facebookF,
+                      label: '',
+                      tooltip: biz.instagram?.isNotEmpty == true
+                          ? app.t('instagram')
+                          : app.t('facebook'),
+                      color: biz.instagram?.isNotEmpty == true
+                          ? const Color(0xFFE1306C)
+                          : const Color(0xFF1877F2),
+                      onTap: () => openUrl(
+                          context,
+                          biz.instagram?.isNotEmpty == true
+                              ? biz.instagram!
+                              : (biz.facebook?.isNotEmpty == true
+                                  ? biz.facebook!
+                                  : 'https://www.instagram.com/explore/search/keyword/?q=${Uri.encodeComponent(biz.nameEn)}')),
+                    ),
+                  if (biz.cat != 'schools' && biz.cat != 'toys')
                     _Action(
                       icon: FontAwesomeIcons.facebookF,
                       label: '',
@@ -245,7 +284,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           biz.facebook?.isNotEmpty == true
                               ? biz.facebook!
                               : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
-                  if (biz.cat != 'clothes')
+                  if (biz.cat != 'clothes' && biz.cat != 'toys')
                     _Action(
                       icon: FontAwesomeIcons.instagram,
                       label: '',

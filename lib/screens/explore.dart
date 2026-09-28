@@ -346,11 +346,22 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final areaIdx = _areaSel == -1 ? app.areaIndex : _areaSel;
 
     var list = kBusinesses
-        .where((b) => _catId == null || b.cat == _catId)
+        .where((b) {
+          if (_catId == null) return true;
+          if (b.cat == _catId) return true;
+          // A play area that hosts parties belongs under Birthdays -> Play Area
+          // too, so parents looking for a venue find it in either place.
+          return _catId == 'birthdays' &&
+              _subcats.contains('playarea') &&
+              b.cat == 'play' &&
+              b.hostsBirthday;
+        })
         .where((b) => _areaSel == -2 || b.area == areaIdx)
         // A listing must carry EVERY selected subcategory: picking English and
         // Arabic returns only nurseries that teach both, not either.
-        .where((b) => _subcats.isEmpty || _subcats.every(b.hasSubcat))
+        .where((b) => _subcats.isEmpty ||
+            _subcats.every(b.hasSubcat) ||
+            (b.cat == 'play' && b.hostsBirthday && _catId == 'birthdays'))
         .where((b) {
           if (_q.isEmpty) return true;
           final q = _q.toLowerCase();
@@ -509,8 +520,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   selected: _catId != null,
                   onTap: _pickCategory,
                 ),
-              // age filter — not for Toys & Gifts, where age isn't recorded
-              if (_catId != 'toys')
+              // Age filter: only where an age actually means something.
+              // Not toys, birthdays or health care.
+              if (!['toys', 'birthdays', 'healthcare'].contains(_catId))
               _chip(
                 icon: Icons.child_care_rounded,
                 label: _ageBand == null

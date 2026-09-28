@@ -153,6 +153,25 @@ const _curricula = [
 const kSubcats = <String, List<Subcat>>{
   'nurseries': _langSubcats,
   'schools': [..._langSubcats, ..._curricula],
+  'sports': [
+    Subcat('football', 'Football', 'كرة قدم', icon: Icons.sports_soccer_rounded),
+    Subcat('swimming', 'Swimming', 'سباحة', icon: Icons.pool_rounded),
+    Subcat('gymnastics', 'Gymnastics', 'جمباز', icon: Icons.sports_gymnastics_rounded),
+    Subcat('ballet', 'Ballet', 'باليه', icon: Icons.music_note_rounded),
+    Subcat('basketball', 'Basketball', 'كرة سلة', icon: Icons.sports_basketball_rounded),
+    Subcat('tennis', 'Tennis', 'تنس', icon: Icons.sports_tennis_rounded),
+    Subcat('karate', 'Karate', 'كاراتيه', icon: Icons.sports_martial_arts_rounded),
+    Subcat('judo', 'Judo', 'جودو', icon: Icons.sports_martial_arts_rounded),
+    Subcat('taekwondo', 'Taekwondo', 'تايكوندو', icon: Icons.sports_martial_arts_rounded),
+    Subcat('squash', 'Squash', 'اسكواش', icon: Icons.sports_tennis_rounded),
+    Subcat('horse_riding', 'Horse Riding', 'ركوب خيل', icon: Icons.bedroom_baby_rounded),
+    Subcat('volleyball', 'Volleyball', 'كرة طائرة', icon: Icons.sports_volleyball_rounded),
+    Subcat('handball', 'Handball', 'كرة يد', icon: Icons.sports_handball_rounded),
+    Subcat('skating', 'Skating', 'تزلج', icon: Icons.roller_skating_rounded),
+    Subcat('kickboxing', 'Kickboxing', 'كيك بوكسينج', icon: Icons.sports_mma_rounded),
+    Subcat('boxing', 'Boxing', 'ملاكمة', icon: Icons.sports_mma_rounded),
+    Subcat('water_polo', 'Water Polo', 'بولو مائي', icon: Icons.pool_rounded),
+  ],
   'play': [
     Subcat('indoor', 'Indoor', 'داخلي', asset: 'sub_indoor'),
     Subcat('outdoor', 'Outdoor', 'خارجي', asset: 'sub_outdoor'),
@@ -249,6 +268,8 @@ class Business {
     this.maxAgeMonths,
     this.cmp = const {},
     this.workingHours,
+    this.hostsBirthday = false,
+    this.birthdayBudget,
     required this.verified,
     this.sponsored = false,
     this.offer = false,
@@ -287,6 +308,11 @@ class Business {
   /// Nursery comparison facts, keyed by field id. Only set for nurseries.
   final Map<String, bool> cmp;
   final String? workingHours;
+
+  /// A play area that also hosts birthday parties, and the budget to expect.
+  /// These places appear under Birthdays -> Play Area as well as in Play Areas.
+  final bool hostsBirthday;
+  final String? birthdayBudget;
 
   /// The fields parents compare on, in display order.
   static const compareFields = <(String, String, String)>[
@@ -369,6 +395,8 @@ class Business {
         for (final f in Business.compareFields) f.$1: _b(j[f.$1]),
       },
       workingHours: _s(j['cmp_working_hours']),
+      hostsBirthday: _b(j['hosts_birthday']),
+      birthdayBudget: _s(j['birthday_budget']),
       verified: _b(j['verified']),
       sponsored: _b(j['sponsored']), offer: _b(j['offer']),
       priceEn: j['price_en'] ?? '', priceAr: j['price_ar'] ?? j['price_en'] ?? '',
