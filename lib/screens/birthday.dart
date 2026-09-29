@@ -39,15 +39,16 @@ class _BirthdayPlannerScreenState extends State<BirthdayPlannerScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final extras = {
+      'cakes': app.t('cakes'),
       'clown': app.t('clown'),
       'decorations': app.t('decorationsA'),
       'puppet': app.t('puppet'),
       'magician': app.t('magician'),
       'facepaint': app.t('facePaint'),
     };
-    final placeSubs = kSubcats['birthdays']!
-        .where((s) => ['indoor', 'outdoor', 'pool'].contains(s.id))
-        .toList();
+    // Play areas are where parties happen; the planner offers the same
+    // indoor / outdoor / pool choice they are tagged with.
+    final placeSubs = kSubcats['play']!;
 
     return SafeArea(
       bottom: false,
@@ -180,22 +181,53 @@ class _BirthdayPlannerScreenState extends State<BirthdayPlannerScreen> {
     final app = context.read<AppState>();
     // venues matching the place type (untagged venues still count), plus
     // service providers (decor / cakes / programs…) when extras are picked
+    // What the planner should suggest:
+    //  - the venue: a play area that hosts parties, matching the place picked
+    //  - the suppliers behind each extra that was ticked
+    final wantsShow = _extras.any(
+        (e) => ['clown', 'puppet', 'magician', 'facepaint'].contains(e));
     final matches = kBusinesses.where((b) {
+      if (b.cat == 'play') return b.hostsBirthday && b.hasSubcat(_place);
       if (b.cat != 'birthdays') return false;
-      final isVenue = b.subcat.isEmpty ||
-          ['indoor', 'outdoor', 'pool'].contains(b.subcat);
-      if (isVenue) return b.subcat.isEmpty || b.subcat == _place;
-      if (_extras.contains('decorations') && b.subcat == 'decoration') {
-        return true;
+      if (b.hasSubcat('playarea')) return true;
+      if (b.hasSubcat('decoration')) return _extras.contains('decorations');
+      if (b.hasSubcat('cakes')) return _extras.contains('cakes');
+      if (b.hasSubcat('shows')) return wantsShow;
+      if (b.hasSubcat('giveaways') || b.hasSubcat('catering')) {
+        return _extras.isNotEmpty;
       }
-      return ['giveaways', 'cakes', 'programs'].contains(b.subcat) &&
-          _extras.isNotEmpty;
+      return false;
     }).toList()
       ..sort((a, b) {
         final local = (b.area == app.areaIndex ? 1 : 0) -
             (a.area == app.areaIndex ? 1 : 0);
         return local != 0 ? local : b.rating.compareTo(a.rating);
       });
+
+    // A rough total: the cheapest option in each part of the party. Only
+    // places that actually have a price recorded count, so the estimate says
+    // how many were priced rather than pretending to be complete.
+    final parts = <String, List<Business>>{};
+    for (final b in matches) {
+      final key = b.cat == 'play' || b.hasSubcat('playarea')
+          ? 'venue'
+          : b.hasSubcat('cakes')
+              ? 'cakes'
+              : b.hasSubcat('shows')
+                  ? 'show'
+                  : b.hasSubcat('decoration')
+                      ? 'decoration'
+                      : 'other';
+      if (key != 'other') (parts[key] ??= []).add(b);
+    }
+    var low = 0, high = 0, priced = 0;
+    for (final list in parts.values) {
+      final ranges = list.map((b) => b.budgetRange).whereType<(int, int)>();
+      if (ranges.isEmpty) continue;
+      priced++;
+      low += ranges.map((r) => r.$1).reduce((a, b) => a < b ? a : b);
+      high += ranges.map((r) => r.$2).reduce((a, b) => a < b ? a : b);
+    }
 
     Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => Scaffold(
@@ -207,7 +239,42 @@ class _BirthdayPlannerScreenState extends State<BirthdayPlannerScreen> {
                               color: Yozi.muted, fontWeight: FontWeight.w700)))
                   : ListView(
                       padding: const EdgeInsets.only(top: 12, bottom: 24),
-                      children: matches.map((b) => BizCard(b)).toList()),
+                      children: [
+                        if (priced > 0)
+                          Container(
+                            margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                                color: Yozi.violetGhost,
+                                borderRadius:
+                                    BorderRadius.circular(Yozi.rMd)),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(app.t('bpEstimate'),
+                                      style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Yozi.muted)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                      low == high
+                                          ? '$low ${app.t('egp')}'
+                                          : '$low – $high ${app.t('egp')}',
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                          color: Yozi.violet)),
+                                  const SizedBox(height: 4),
+                                  Text(app.t('bpEstimateNote'),
+                                      style: const TextStyle(
+                                          fontSize: 11.5,
+                                          height: 1.35,
+                                          color: Yozi.muted)),
+                                ]),
+                          ),
+                        ...matches.map((b) => BizCard(b)),
+                      ]),
             )));
   }
 

@@ -403,8 +403,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
             final bd = b.drive > 0 ? b.drive : 9999;
             return ad.compareTo(bd);
           default:
+            // Recommended order: sponsored places first, then verified ones,
+            // then by rating within each group.
             final s = (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0);
-            return s != 0 ? s : b.rating.compareTo(a.rating);
+            if (s != 0) return s;
+            final v = (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
+            if (v != 0) return v;
+            return b.rating.compareTo(a.rating);
         }
       });
 

@@ -125,32 +125,44 @@ class ShellScreen extends StatelessWidget {
   }
 
   Widget _shellScaffold(BuildContext context, AppState app, ShellIndex shell) {
+    // Sections can be switched off from the admin panel, so Yazi can launch
+    // without Glow or the birthday planner and turn them on later with no
+    // new app version.
+    final repo = context.watch<DataRepo>();
+    final showGlow = repo.settings['tab_glow'] != false;
+    final showBirthday = repo.settings['tab_birthday'] != false;
+
+    final pages = <Widget>[
+      const HomeScreen(),
+      if (showGlow) const GlowScreen(),
+      if (showBirthday) const BirthdayPlannerScreen(),
+      const ProfileScreen(),
+    ];
+    final index = shell.value.clamp(0, pages.length - 1);
+
     return Scaffold(
       body: IndexedStack(
-        index: shell.value,
-        children: const [
-          HomeScreen(),
-          GlowScreen(),
-          BirthdayPlannerScreen(),
-          ProfileScreen(),
-        ],
+        index: index,
+        children: pages,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.value,
+        selectedIndex: index,
         onDestinationSelected: shell.set,
         destinations: [
           NavigationDestination(
               icon: const Icon(Icons.home_outlined),
               selectedIcon: const Icon(Icons.home_rounded),
               label: app.t('home')),
-          NavigationDestination(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              selectedIcon: const Icon(Icons.auto_awesome_rounded),
-              label: app.t('mamaSpace')),
-          NavigationDestination(
-              icon: const Icon(Icons.cake_outlined),
-              selectedIcon: const Icon(Icons.cake_rounded),
-              label: app.t('birthdayTab')),
+          if (showGlow)
+            NavigationDestination(
+                icon: const Icon(Icons.auto_awesome_outlined),
+                selectedIcon: const Icon(Icons.auto_awesome_rounded),
+                label: app.t('mamaSpace')),
+          if (showBirthday)
+            NavigationDestination(
+                icon: const Icon(Icons.cake_outlined),
+                selectedIcon: const Icon(Icons.cake_rounded),
+                label: app.t('birthdayTab')),
           NavigationDestination(
               icon: const Icon(Icons.person_outline_rounded),
               selectedIcon: const Icon(Icons.person_rounded),

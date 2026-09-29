@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Production API — override at build time with --dart-define=YAZI_API=...
 const kApiBase = String.fromEnvironment('YAZI_API',
-    defaultValue: 'https://yazi.hossamhamouda.com/api/v1');
+    defaultValue: 'http://164.92.167.224:8787/api/v1');
 
 /// Origin of the API (no /api/v1) — uploaded media lives under /uploads.
 final String kApiOrigin = kApiBase.replaceFirst(RegExp(r'/api/v1/?$'), '');
@@ -190,7 +190,7 @@ const kSubcats = <String, List<Subcat>>{
   'activities': [
     Subcat('robotics', 'Robotics', 'روبوتيكس', asset: 'sub_robotics', icon: Icons.smart_toy_rounded),
     Subcat('art', 'Art', 'فنون', asset: 'sub_art', icon: Icons.palette_rounded),
-    Subcat('quran', 'Quran', 'قرآن', asset: 'sub_quran', icon: Icons.menu_book_rounded),
+    Subcat('quran', 'Quraan', 'قرآن', asset: 'sub_quran', icon: Icons.menu_book_rounded),
     Subcat('music', 'Music', 'موسيقى', asset: 'sub_music', icon: Icons.music_note_rounded),
     Subcat('home_activities', 'Home Activities', 'أنشطة منزلية', asset: 'sub_home_activities',
         icon: Icons.home_rounded),
@@ -440,6 +440,22 @@ class Business {
       .toSet();
 
   bool hasSubcat(String id) => subcatIds.contains(id.trim().toLowerCase());
+
+
+  /// The planner's price range for this listing, read from [birthdayBudget].
+  /// Accepts "3000", "3,000 - 6,000", "3000-6000 EGP". Returns null when the
+  /// field is empty or has no numbers in it.
+  (int, int)? get budgetRange {
+    final t = (birthdayBudget ?? '').replaceAll(',', '');
+    final nums = RegExp(r'\d+')
+        .allMatches(t)
+        .map((m) => int.parse(m.group(0)!))
+        .where((n) => n > 0)
+        .toList();
+    if (nums.isEmpty) return null;
+    if (nums.length == 1) return (nums[0], nums[0]);
+    return (nums.reduce((a, b) => a < b ? a : b), nums.reduce((a, b) => a > b ? a : b));
+  }
 
   /// What to print for ages. Prefers the numeric month columns and formats
   /// them sensibly; falls back to the old free-text field.

@@ -185,22 +185,15 @@ class _BusinessScreenState extends State<BusinessScreen> {
                                           : Yozi.coral)),
                             ],
                           ]),
-                      // A play area that hosts parties: say so, with the budget.
+                      // A play area that hosts parties. The budget is NOT shown
+                      // here — it is for the birthday planner's estimate only.
                       if (biz.cat == 'play' && biz.hostsBirthday) ...[
                         const SizedBox(height: 4),
-                        Text.rich(TextSpan(children: [
-                          TextSpan(
-                              text: '🎂 ${app.t('hostsBirthdays')}',
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: Yozi.violet)),
-                          if ((biz.birthdayBudget ?? '').isNotEmpty)
-                            TextSpan(
-                                text: '  ·  ${biz.birthdayBudget}',
-                                style: const TextStyle(
-                                    fontSize: 13, color: Yozi.muted)),
-                        ])),
+                        Text('🎂 ${app.t('hostsBirthdays')}',
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Yozi.violet)),
                       ],
                       if (biz.ageLabel.isNotEmpty) ...[
                         const SizedBox(height: 4),
@@ -291,7 +284,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           biz.facebook?.isNotEmpty == true
                               ? biz.facebook!
                               : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
-                  if (biz.cat != 'clothes' && biz.cat != 'toys')
+                  if (!['clothes', 'toys', 'play'].contains(biz.cat))
                     _Action(
                       icon: FontAwesomeIcons.instagram,
                       label: '',
