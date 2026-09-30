@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,7 @@ import 'data/mock.dart';
 import 'core/theme.dart';
 import 'screens/birthday.dart';
 import 'screens/home.dart';
+import 'core/push.dart';
 import 'screens/glow.dart';
 import 'screens/onboarding.dart';
 import 'screens/profile.dart';
@@ -26,6 +29,23 @@ Future<void> main() async {
       child: const YoziApp(),
     ),
   );
+
+  // Notifications for admissions alerts. Deliberately after runApp: if
+  // Firebase is missing or the parent declines, Yazi carries on exactly as
+  // before and alerts still appear inside the app.
+  //
+  // AppState is built lazily, so on a first install the device id may not be
+  // stored yet. Create it here with the same key if needed — AppState then
+  // reads the very same id, and the parent's subscriptions and their
+  // notifications stay tied together.
+  var deviceId = prefs.getString('deviceId');
+  if (deviceId == null || deviceId.isEmpty) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final r = Random.secure();
+    deviceId = 'dev-${List.generate(20, (_) => chars[r.nextInt(chars.length)]).join()}';
+    await prefs.setString('deviceId', deviceId);
+  }
+  Push.start(deviceId, prefs.getString('lang') ?? 'en');
 }
 
 class YoziApp extends StatelessWidget {

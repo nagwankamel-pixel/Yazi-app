@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873946741466",
+    "project_id": "yazi-3cec4",
+    "storage_bucket": "yazi-3cec4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873946741466:android:b9854ae8c484f9315203e3",
+        "android_client_info": {
+          "package_name": "com.yozi.yozi_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMEH4AoV6X-4tQUdEFA0jomEuXnUfxvJk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

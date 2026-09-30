@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Production API — override at build time with --dart-define=YAZI_API=...
 const kApiBase = String.fromEnvironment('YAZI_API',
-    defaultValue: 'http://164.92.167.224:8787/api/v1');
+    defaultValue: 'https://api.yazi-app.com/api/v1');
 
 /// Origin of the API (no /api/v1) — uploaded media lives under /uploads.
 final String kApiOrigin = kApiBase.replaceFirst(RegExp(r'/api/v1/?$'), '');

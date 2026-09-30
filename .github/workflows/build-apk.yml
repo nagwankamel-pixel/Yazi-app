@@ -7,7 +7,7 @@ on:
       api_base:
         description: 'Backend API base URL'
         required: true
-        default: 'http://164.92.167.224:8787/api/v1'
+        default: 'https://api.yazi-app.com/api/v1'
   push:
     branches: [main]
 
@@ -45,6 +45,24 @@ jobs:
           sed -i 's|android:label="[^"]*"|android:label="YAZI"|' $MANIFEST
           cat $MANIFEST
 
+      # Firebase needs its Gradle plugin. Done here rather than in the repo
+      # because "flutter create" above can rewrite the Gradle files.
+      - name: Enable Firebase notifications
+        run: |
+          SET=android/settings.gradle.kts
+          APP=android/app/build.gradle.kts
+          if [ ! -f android/app/google-services.json ]; then
+            echo "google-services.json missing — build would fail at runtime"; exit 1
+          fi
+          grep -q 'com.google.gms.google-services' $SET || \
+            sed -i 's|id("com.android.application") version|id("com.google.gms.google-services") version "4.4.2" apply false\n    id("com.android.application") version|' $SET
+          grep -q 'com.google.gms.google-services' $APP || \
+            sed -i 's|id("dev.flutter.flutter-gradle-plugin")|id("dev.flutter.flutter-gradle-plugin")\n    id("com.google.gms.google-services")|' $APP
+          # Firebase needs a slightly newer minimum Android version than the default.
+          grep -q 'minSdk = 23' $APP || sed -i 's|minSdk = flutter.minSdkVersion|minSdk = 23|' $APP
+          echo "--- settings.gradle.kts ---"; sed -n '18,26p' $SET
+          echo "--- app/build.gradle.kts ---"; sed -n '1,10p' $APP
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -57,7 +75,7 @@ jobs:
       - name: Build release APK
         run: |
           flutter build apk --release \
-            --dart-define=YAZI_API=${{ github.event.inputs.api_base || 'http://164.92.167.224:8787/api/v1' }}
+            --dart-define=YAZI_API=${{ github.event.inputs.api_base || 'https://api.yazi-app.com/api/v1' }}
 
       - name: Rename APK
         run: |
