@@ -253,25 +253,28 @@ class _BusinessScreenState extends State<BusinessScreen> {
                               : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(biz.nameEn)}')),
                   // Toys & Gifts: one social button, since a shop has either
                   // an Instagram or a Facebook page, rarely both.
+                  // Toys & Gifts: one social button. Facebook is what the
+                  // admin panel collects for this category, so prefer it and
+                  // fall back to an Instagram link entered earlier.
                   if (biz.cat == 'toys')
                     _Action(
-                      icon: biz.instagram?.isNotEmpty == true
-                          ? FontAwesomeIcons.instagram
-                          : FontAwesomeIcons.facebookF,
+                      icon: biz.facebook?.isNotEmpty == true
+                          ? FontAwesomeIcons.facebookF
+                          : FontAwesomeIcons.instagram,
                       label: '',
-                      tooltip: biz.instagram?.isNotEmpty == true
-                          ? app.t('instagram')
-                          : app.t('facebook'),
-                      color: biz.instagram?.isNotEmpty == true
-                          ? const Color(0xFFE1306C)
-                          : const Color(0xFF1877F2),
+                      tooltip: biz.facebook?.isNotEmpty == true
+                          ? app.t('facebook')
+                          : app.t('instagram'),
+                      color: biz.facebook?.isNotEmpty == true
+                          ? const Color(0xFF1877F2)
+                          : const Color(0xFFE1306C),
                       onTap: () => openUrl(
                           context,
-                          biz.instagram?.isNotEmpty == true
-                              ? biz.instagram!
-                              : (biz.facebook?.isNotEmpty == true
-                                  ? biz.facebook!
-                                  : 'https://www.instagram.com/explore/search/keyword/?q=${Uri.encodeComponent(biz.nameEn)}')),
+                          biz.facebook?.isNotEmpty == true
+                              ? biz.facebook!
+                              : (biz.instagram?.isNotEmpty == true
+                                  ? biz.instagram!
+                                  : 'https://www.facebook.com/search/top?q=${Uri.encodeComponent(biz.nameEn)}')),
                     ),
                   if (biz.cat != 'schools' && biz.cat != 'toys')
                     _Action(

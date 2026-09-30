@@ -525,9 +525,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   selected: _catId != null,
                   onTap: _pickCategory,
                 ),
-              // Age filter: only where an age actually means something.
-              // Not toys, birthdays or health care.
-              if (!['toys', 'birthdays', 'healthcare'].contains(_catId))
+              // Age filter: only where a child's age actually means something.
+              // Not toys, birthdays, health care — nor Glow, which is for mums.
+              if (!['toys', 'birthdays', 'healthcare', 'glow'].contains(_catId))
               _chip(
                 icon: Icons.child_care_rounded,
                 label: _ageBand == null
@@ -598,6 +598,48 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           : _subcats.add(s.id)),
                     ),
                 ],
+              ),
+            )
+          // More than a handful of subcategories does not fit on one line, so
+          // offer a picker instead of a bar that runs off the screen.
+          else if (subs.length > 8)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(Yozi.rMd),
+                onTap: () => _subcatSheet(subs, app),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _subcats.isEmpty ? Colors.white : Yozi.violetGhost,
+                    border: Border.all(
+                        color: _subcats.isEmpty ? Yozi.line : Yozi.violet,
+                        width: _subcats.isEmpty ? 1 : 1.4),
+                    borderRadius: BorderRadius.circular(Yozi.rMd),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.tune_rounded, size: 18, color: Yozi.violet),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _subcats.isEmpty
+                            ? app.t('subcatAll')
+                            : subs
+                                .where((x) => _subcats.contains(x.id))
+                                .map((x) => x.name(app.lang))
+                                .join(', '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _subcats.isEmpty ? Yozi.muted : Yozi.violet),
+                      ),
+                    ),
+                    const Icon(Icons.expand_more_rounded,
+                        size: 20, color: Yozi.muted),
+                  ]),
+                ),
               ),
             )
           else
@@ -711,6 +753,87 @@ class _ResultsScreenState extends State<ResultsScreen> {
       ],
       selected: _ageBand ?? -1,
       onPick: (v) => setState(() => _ageBand = v == -1 ? null : v),
+    );
+  }
+
+  /// A tidy picker for categories with many subcategories. Sports has 17 —
+  /// as chips they run off the side of the screen and most stay unseen.
+  void _subcatSheet(List<Subcat> subs, AppState app) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.fromLTRB(0, 12, 0, 14),
+                  decoration: BoxDecoration(
+                      color: Yozi.line, borderRadius: BorderRadius.circular(4))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(children: [
+                  Expanded(
+                    child: Text(app.t('filterSubcat'),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w800)),
+                  ),
+                  if (_subcats.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        setSheet(() => _subcats.clear());
+                        setState(() {});
+                      },
+                      child: Text(app.t('clearAll')),
+                    ),
+                ]),
+              ),
+              const SizedBox(height: 4),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: subs.map((sc) {
+                    final on = _subcats.contains(sc.id);
+                    return CheckboxListTile(
+                      value: on,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: Yozi.violet,
+                      title: Text(sc.name(app.lang),
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                      onChanged: (v) {
+                        setSheet(() {
+                          if (v == true) {
+                            _subcats.add(sc.id);
+                          } else {
+                            _subcats.remove(sc.id);
+                          }
+                        });
+                        setState(() {});
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(app.t('done')),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 
