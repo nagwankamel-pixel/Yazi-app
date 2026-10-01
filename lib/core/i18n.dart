@@ -515,4 +515,4 @@ const Map<String, Map<String, String>> kStrings = {
 };
 
 /// Displayed support address (Help & Support screen).
-const kSupportEmail = 'support@yazi.com';
+const kSupportEmail = 'support@yazi-app.com';
