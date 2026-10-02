@@ -45,6 +45,14 @@ jobs:
           sed -i 's|android:label="[^"]*"|android:label="YAZI"|' $MANIFEST
           cat $MANIFEST
 
+      # "flutter create" above can overwrite the Gradle file, which would
+      # silently drop the signing config and leave a build Play rejects.
+      # Restore our own copy over whatever it wrote.
+      - name: Restore the Yazi Gradle config
+        run: |
+          cp android/app/build.gradle.kts.yazi android/app/build.gradle.kts
+          grep -q hasUploadKey android/app/build.gradle.kts && echo "signing config in place"
+
       # Firebase needs its Gradle plugin. Done here rather than in the repo
       # because "flutter create" above can rewrite the Gradle files.
       - name: Enable Firebase notifications
@@ -72,19 +80,55 @@ jobs:
       - name: Analyze (warnings only, does not stop the build)
         run: flutter analyze || true
 
-      - name: Build release APK
+      # Google Play will not accept a debug-signed build. When the four
+      # signing secrets exist in the repository, the release is signed with
+      # the real upload key; without them the build still produces an APK you
+      # can install yourself, just not one Play will take.
+      - name: Set up signing
+        id: signing
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "signed=false" >> $GITHUB_OUTPUT
+            echo "No signing secrets — building unsigned. Play will not accept this."
+          else
+            echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks
+            cat > android/key.properties <<PROPS
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          PROPS
+            echo "signed=true" >> $GITHUB_OUTPUT
+            echo "Signing with the upload key."
+          fi
+
+      - name: Build app bundle for Play (.aab)
+        if: steps.signing.outputs.signed == 'true'
+        run: |
+          flutter build appbundle --release \
+            --dart-define=YAZI_API=${{ github.event.inputs.api_base || 'https://api.yazi-app.com/api/v1' }}
+
+      - name: Build APK for installing directly
         run: |
           flutter build apk --release \
             --dart-define=YAZI_API=${{ github.event.inputs.api_base || 'https://api.yazi-app.com/api/v1' }}
 
-      - name: Rename APK
+      - name: Collect the files
         run: |
           mkdir -p out
-          cp build/app/outputs/flutter-apk/app-release.apk "out/YAZI-$(date +%Y%m%d-%H%M).apk"
+          STAMP=$(date +%Y%m%d-%H%M)
+          cp build/app/outputs/flutter-apk/app-release.apk "out/YAZI-$STAMP.apk"
+          if [ -f build/app/outputs/bundle/release/app-release.aab ]; then
+            cp build/app/outputs/bundle/release/app-release.aab "out/YAZI-$STAMP.aab"
+          fi
           ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
           name: YAZI-apk
-          path: out/*.apk
+          path: |
+            out/*.apk
+            out/*.aab
           retention-days: 30

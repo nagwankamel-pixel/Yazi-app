@@ -83,6 +83,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final repo = context.watch<DataRepo>();
+    // Switched off from the admin panel until these are ready for parents.
+    final showPremium = repo.settings['tab_premium'] != false;
+    final showOffers = repo.settings['tab_offers'] != false;
     final weekendEvents = kEvents.where((e) => e.thisWeek).toList();
     final upcomingEvents = weekendEvents.isNotEmpty ? weekendEvents : kEvents.take(6).toList();
     final sponsored = kBusinesses
@@ -229,11 +232,12 @@ class HomeScreen extends StatelessWidget {
                 label: app.t('weekendPlanT'),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const WeekendPlanScreen()))),
-            _QuickChip(
-                icon: Icons.local_activity_rounded,
-                label: app.t('hasOffer'),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const OffersScreen()))),
+            if (showOffers)
+              _QuickChip(
+                  icon: Icons.local_activity_rounded,
+                  label: app.t('hasOffer'),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const OffersScreen()))),
           ],
         ),
       ),
@@ -368,8 +372,8 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ],
-      // ---- offers (hidden when there are none) ----
-      if (kOffers.isNotEmpty) ...[
+      // ---- offers (hidden when switched off, or when there are none) ----
+      if (showOffers && kOffers.isNotEmpty) ...[
         SectionRow(app.t('offersNear'), action: app.t('viewAll'),
             onAction: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const OffersScreen()))),
@@ -387,7 +391,7 @@ class HomeScreen extends StatelessWidget {
         ...sponsored.take(3).map((b) => BizCard(b)),
       ],
       // ---- premium strip ----
-      if (!app.premium)
+      if (showPremium && !app.premium)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Material(

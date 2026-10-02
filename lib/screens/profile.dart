@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/i18n.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../data/api.dart';
 import '../data/mock.dart';
 import '../widgets/common.dart';
 import 'home.dart';
@@ -18,6 +19,11 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
+    // Sections that can be switched off from the admin panel, so Yazi can
+    // launch without them and turn them on later with no new app version.
+    final repo = context.watch<DataRepo>();
+    final showPremium = repo.settings['tab_premium'] != false;
+    final showOffers = repo.settings['tab_offers'] != false;
 
     return SafeArea(
       bottom: false,
@@ -92,9 +98,10 @@ class ProfileScreen extends StatelessWidget {
             ),
           ]),
         ),
-        WalletHero(
-            onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const OffersScreen()))),
+        if (showOffers)
+          WalletHero(
+              onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OffersScreen()))),
         // children — name + age, editable and removable
         SectionRow(app.t('myChildren'), action: '+ ${app.t('addChild')}',
             onAction: () => _openChildSheet(context)),
@@ -158,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
         ),
         // premium banner
-        if (!app.premium)
+        if (showPremium && !app.premium)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Material(
@@ -229,18 +236,20 @@ class ProfileScreen extends StatelessWidget {
                     builder: (_) => Scaffold(
                         appBar: AppBar(title: Text(app.t('savedTitle'))),
                         body: const SavedScreen())))),
-            _MenuItem(
-                icon: Icons.local_activity_rounded,
-                label: app.t('offers'),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const OffersScreen()))),
-            _MenuItem(
-                icon: Icons.workspace_premium_rounded,
-                label: app.t('premium'),
-                iconBg: Yozi.goldWash,
-                iconColor: Yozi.gold,
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PremiumScreen()))),
+            if (showOffers)
+              _MenuItem(
+                  icon: Icons.local_activity_rounded,
+                  label: app.t('offers'),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const OffersScreen()))),
+            if (showPremium)
+              _MenuItem(
+                  icon: Icons.workspace_premium_rounded,
+                  label: app.t('premium'),
+                  iconBg: Yozi.goldWash,
+                  iconColor: Yozi.gold,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const PremiumScreen()))),
             _MenuItem(
                 icon: Icons.language_rounded,
                 label: app.t('language'),
