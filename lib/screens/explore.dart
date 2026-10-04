@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../data/api.dart';
 import '../data/mock.dart';
 import 'compare.dart';
 import '../widgets/common.dart';
@@ -341,6 +342,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
+    final offersOn = context.read<DataRepo>().settings['tab_offers'] != false;
     final cat = _catId != null ? catById(_catId!) : null;
     final subs = kSubcats[_catId] ?? const <Subcat>[];
     final areaIdx = _areaSel == -1 ? app.areaIndex : _areaSel;
@@ -542,7 +544,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
               // Item 7: "Open now" and "Offers" are not shown for Schools.
               if (!_isSchools) ...[
                 _filterChip('open', Icons.schedule_rounded, app.t('openNow')),
-                _filterChip('off', Icons.local_activity_rounded, app.t('hasOffer')),
+                if (offersOn)
+                  _filterChip('off', Icons.local_activity_rounded, app.t('hasOffer')),
               ],
               _filterChip('near', Icons.near_me_rounded, app.t('nearMe')),
             ],

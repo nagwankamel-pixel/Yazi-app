@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../data/api.dart';
 import '../data/mock.dart';
 import '../screens/business.dart';
 import '../screens/events.dart';
@@ -282,7 +283,8 @@ class BizCard extends StatelessWidget {
                         left: 6,
                         child: BadgePill(app.t('sponsored').toUpperCase(),
                             bg: Yozi.coralWash, fg: Yozi.coral))
-                  else if (biz.offer)
+                  else if (biz.offer &&
+                      context.read<DataRepo>().settings['tab_offers'] != false)
                     Positioned(
                         top: 6,
                         left: 6,

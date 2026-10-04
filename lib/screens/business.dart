@@ -46,7 +46,9 @@ class _BusinessScreenState extends State<BusinessScreen> {
     if (biz == null) {
       return Scaffold(appBar: AppBar(), body: Center(child: Text(app.t('noResults'))));
     }
-    final offers = kOffers.where((o) => o.bizId == biz.id).toList();
+    final offersOn = context.read<DataRepo>().settings['tab_offers'] != false;
+    final offers =
+        offersOn ? kOffers.where((o) => o.bizId == biz.id).toList() : <Offer>[];
     final reviews = kReviews[biz.id] ?? const <Review>[];
 
     return Scaffold(
