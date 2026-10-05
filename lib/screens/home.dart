@@ -146,8 +146,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                const _BellButton(),
               ]),
             ),
             Padding(

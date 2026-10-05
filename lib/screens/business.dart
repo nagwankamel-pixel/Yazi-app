@@ -226,8 +226,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           ? showToast(context, '📞 ${app.t('calling')}')
                           : openUrl(context, 'tel:${_phone(biz)}')),
                   // WhatsApp is hidden where it isn't how people get in touch:
-                  // schools, kids fashion, play areas, toys & gifts.
-                  if (!['schools', 'clothes', 'play', 'toys'].contains(biz.cat))
+                  // schools, nurseries, kids fashion, play areas, toys & gifts.
+                  if (!['schools', 'nurseries', 'clothes', 'play', 'toys'].contains(biz.cat))
                     _Action(
                         icon: FontAwesomeIcons.whatsapp,
                         label: '',
@@ -245,7 +245,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                         color: Yozi.violet,
                         onTap: () => openUrl(context, biz.website!)),
                   _Action(
-                      icon: Icons.near_me_rounded,
+                      icon: Icons.location_on_rounded,
                       label: '',
                       tooltip: app.t('directions'),
                       onTap: () => openUrl(

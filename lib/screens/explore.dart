@@ -343,6 +343,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final offersOn = context.read<DataRepo>().settings['tab_offers'] != false;
+    final hasActive = _hasActiveFilters;
     final cat = _catId != null ? catById(_catId!) : null;
     final subs = kSubcats[_catId] ?? const <Subcat>[];
     final areaIdx = _areaSel == -1 ? app.areaIndex : _areaSel;
@@ -510,6 +511,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
+              // Clear all: shown whenever any filter is on.
+              if (hasActive)
+                _chip(
+                  icon: Icons.close_rounded,
+                  label: app.t('clearAll'),
+                  selected: false,
+                  onTap: _clearAll,
+                ),
               // area picker
               _chip(
                 icon: Icons.place_rounded,
@@ -710,6 +719,30 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  /// True when anything narrows the list away from its defaults.
+  bool get _hasActiveFilters =>
+      _filters.isNotEmpty ||
+      _subcats.isNotEmpty ||
+      _ageBand != null ||
+      _areaSel != -1 ||
+      _sort != 'rec' ||
+      _q.isNotEmpty ||
+      (widget.catId == null && _catId != null);
+
+  /// Puts every filter back to its starting value.
+  void _clearAll() {
+    setState(() {
+      _filters.clear();
+      _subcats.clear();
+      _ageBand = null;
+      _areaSel = -1;
+      _sort = 'rec';
+      _q = '';
+      _searchCtl.clear();
+      _catId = widget.catId;
+    });
+  }
+
   void _pickArea() {
     final app = context.read<AppState>();
     _optionsSheet(
@@ -863,9 +896,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           color: Yozi.line,
                           borderRadius: BorderRadius.circular(4))),
                 ),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
+                Row(children: [
+                  Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w800)),
+                  ),
+                  if (_hasActiveFilters)
+                    TextButton(
+                      onPressed: () {
+                        _clearAll();
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(context.read<AppState>().t('clearAll')),
+                    ),
+                ]),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 9,
