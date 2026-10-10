@@ -360,10 +360,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
               b.hostsBirthday;
         })
         .where((b) => _areaSel == -2 || b.area == areaIdx)
-        // A listing must carry EVERY selected subcategory: picking English and
-        // Arabic returns only nurseries that teach both, not either.
+        // A listing matches when it carries ANY selected subcategory, so
+        // picking Indoor and Outdoor shows both kinds of place instead of an
+        // empty screen. Places that carry ALL the picks are ranked first
+        // (see the sort below).
         .where((b) => _subcats.isEmpty ||
-            _subcats.every(b.hasSubcat) ||
+            _subcats.any(b.hasSubcat) ||
             (b.cat == 'play' && b.hostsBirthday && _catId == 'birthdays'))
         .where((b) {
           if (_q.isEmpty) return true;
@@ -406,8 +408,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
             final bd = b.drive > 0 ? b.drive : 9999;
             return ad.compareTo(bd);
           default:
-            // Recommended order: sponsored places first, then verified ones,
-            // then by rating within each group.
+            // Recommended order: places matching more of the selected
+            // subcategories first, then sponsored, then verified, then rating.
+            if (_subcats.length > 1) {
+              final m = _subcats.where(b.hasSubcat).length -
+                  _subcats.where(a.hasSubcat).length;
+              if (m != 0) return m;
+            }
             final s = (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0);
             if (s != 0) return s;
             final v = (b.verified ? 1 : 0) - (a.verified ? 1 : 0);

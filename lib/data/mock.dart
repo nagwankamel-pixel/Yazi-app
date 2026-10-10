@@ -688,7 +688,7 @@ class Review {
 }
 
 /// App version shown in footers — keep in sync with pubspec.yaml.
-const kAppVersion = '1.6.0';
+const kAppVersion = '1.6.1';
 
 /// ---------- live data (hydrated from the API by DataRepo) ----------
 final List<Area> kAreas = [];
