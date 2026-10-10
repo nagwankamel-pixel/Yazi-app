@@ -37,7 +37,7 @@ android {
         applicationId = "com.yozi.yozi_app"
         // Firebase needs Android 6.0 or newer.
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
