@@ -67,7 +67,7 @@ jobs:
           grep -q 'com.google.gms.google-services' $APP || \
             sed -i 's|id("dev.flutter.flutter-gradle-plugin")|id("dev.flutter.flutter-gradle-plugin")\n    id("com.google.gms.google-services")|' $APP
           # Firebase needs a slightly newer minimum Android version than the default.
-          grep -q 'minSdk = 23' $APP || sed -i 's|minSdk = flutter.minSdkVersion|minSdk = 23|' $APP
+          grep -q 'minSdk = 24' $APP || sed -i 's|minSdk = flutter.minSdkVersion|minSdk = 24|' $APP
           echo "--- settings.gradle.kts ---"; sed -n '18,26p' $SET
           echo "--- app/build.gradle.kts ---"; sed -n '1,10p' $APP
 
