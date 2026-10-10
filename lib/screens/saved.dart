@@ -43,7 +43,6 @@ class _SavedScreenState extends State<SavedScreen> {
             child: Row(children: [
               _seg(0, app.t('places')),
               _seg(1, app.t('eventsTab')),
-              _seg(2, app.t('compare')),
             ]),
           ),
         ),
@@ -54,19 +53,6 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 
   Widget _body(AppState app, List<Business> biz, List<KidsEvent> ev) {
-    if (_tab == 2) {
-      // Inline compare — reuse the compare table for nurseries.
-      return ListView(padding: const EdgeInsets.only(bottom: 24), children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(app.t('compareTitle'),
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-        ),
-        const SizedBox(height: 8),
-        _CompareEmbed(),
-      ]);
-    }
     if (_tab == 0) {
       if (biz.isEmpty) return _empty(app);
       return ListView(

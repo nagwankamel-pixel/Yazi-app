@@ -301,6 +301,24 @@ const _schoolYears = <(String, int, int)>[
 class _ResultsScreenState extends State<ResultsScreen> {
   late final Set<String> _filters = {if (widget.initialOpen) 'open'};
   late String? _catId = widget.catId;
+  /// Set when the parent taps "Show places with either". It is tied to the
+  /// exact selection it was pressed for, so changing the picks goes back to
+  /// the strict "must match all" rule on its own.
+  String? _anyKey;
+  String get _subKey => (_subcats.toList()..sort()).join('|');
+  bool get _matchAny =>
+      _anyKey != null && _anyKey == _subKey && _subcats.length > 1;
+
+  // Nurseries/schools: several languages (or several curricula) mean "any of
+  // them" (English + French = all English plus all French). Different groups
+  // still narrow each other (IB + French). Other categories keep the strict rule.
+  static const _langIds = {'german', 'english', 'french', 'arabic'};
+  static const _currIds = {'ib', 'ig', 'american', 'canadian', 'national'};
+  bool get _grouped => _catId == 'nurseries' || _catId == 'schools';
+  // Several picks always show places with ANY of them, best matches first.
+  // When no place has all of them, a line above the results says so.
+  bool _subMatch(Business b) => _subcats.every(b.hasSubcat);
+
   late final Set<String> _subcats = {
     if ((widget.initialSubcat ?? '').isNotEmpty) widget.initialSubcat!
   };
@@ -360,12 +378,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
               b.hostsBirthday;
         })
         .where((b) => _areaSel == -2 || b.area == areaIdx)
-        // A listing matches when it carries ANY selected subcategory, so
-        // picking Indoor and Outdoor shows both kinds of place instead of an
-        // empty screen. Places that carry ALL the picks are ranked first
-        // (see the sort below).
+        // By default a listing must carry EVERY selected subcategory (Indoor +
+        // Outdoor = places that are both). The screen says so, and when nothing
+        // matches it offers "Show places with either" (_matchAny).
         .where((b) => _subcats.isEmpty ||
-            _subcats.any(b.hasSubcat) ||
+            _subMatch(b) ||
             (b.cat == 'play' && b.hostsBirthday && _catId == 'birthdays'))
         .where((b) {
           if (_q.isEmpty) return true;
@@ -410,11 +427,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
           default:
             // Recommended order: places matching more of the selected
             // subcategories first, then sponsored, then verified, then rating.
-            if (_subcats.length > 1) {
-              final m = _subcats.where(b.hasSubcat).length -
-                  _subcats.where(a.hasSubcat).length;
-              if (m != 0) return m;
-            }
             final s = (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0);
             if (s != 0) return s;
             final v = (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
@@ -714,9 +726,26 @@ class _ResultsScreenState extends State<ResultsScreen> {
           Expanded(
             child: list.isEmpty
                 ? Center(
-                    child: Text(app.t('noResults'),
-                        style: const TextStyle(
-                            color: Yozi.muted, fontWeight: FontWeight.w700)))
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Text(
+                            _subcats.length > 1
+                                ? '${app.t('noBoth')}\n${_picksLabel(app, ' + ')}'
+                                : app.t('noResults'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Yozi.muted,
+                                fontWeight: FontWeight.w700)),
+                        if (_subcats.length > 1) ...[
+                          const SizedBox(height: 14),
+                          OutlinedButton(
+                              onPressed: () =>
+                                  setState(() => _subcats.clear()),
+                              child: Text(app.t('clearAll'))),
+                        ],
+                      ]),
+                    ))
                 : ListView(
                     padding: const EdgeInsets.only(bottom: 24),
                     children: list.map((b) => BizCard(b)).toList()),
@@ -725,6 +754,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
       ),
     );
   }
+
+  /// "Indoor + Outdoor" style label of the selected subcategories.
+  String _picksLabel(AppState app, String sep) => _subcats
+      .map((id) => subcatById(_catId ?? '', id)?.name(app.lang) ?? id)
+      .join(sep);
 
   /// True when anything narrows the list away from its defaults.
   bool get _hasActiveFilters =>
@@ -741,6 +775,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     setState(() {
       _filters.clear();
       _subcats.clear();
+      _anyKey = null;
       _ageBand = null;
       _areaSel = -1;
       _sort = 'rec';
