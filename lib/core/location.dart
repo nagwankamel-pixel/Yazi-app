@@ -41,3 +41,35 @@ Future<AreaDetection> detectNearestArea() async {
   }
   return AreaDetection(areaIndex: bestI);
 }
+
+
+/// Result of a plain GPS lookup (no area snapping).
+class UserPosition {
+  const UserPosition({this.lat, this.lng, this.denied = false, this.off = false});
+  final double? lat, lng;
+  final bool denied;
+  final bool off;
+  bool get ok => lat != null && lng != null;
+}
+
+/// Gets the device position only. [ask] = false never shows a permission prompt.
+Future<UserPosition> getUserPosition({bool ask = true}) async {
+  if (!await Geolocator.isLocationServiceEnabled()) {
+    return const UserPosition(off: true);
+  }
+  var perm = await Geolocator.checkPermission();
+  if (perm == LocationPermission.denied && ask) {
+    perm = await Geolocator.requestPermission();
+  }
+  if (perm == LocationPermission.denied ||
+      perm == LocationPermission.deniedForever) {
+    return const UserPosition(denied: true);
+  }
+  final pos = await Geolocator.getCurrentPosition(
+    locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.medium,
+      timeLimit: Duration(seconds: 12),
+    ),
+  );
+  return UserPosition(lat: pos.latitude, lng: pos.longitude);
+}

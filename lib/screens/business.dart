@@ -166,13 +166,13 @@ class _BusinessScreenState extends State<BusinessScreen> {
                                     fontSize: 13, color: Yozi.muted)),
                             // Item 11: only claim a travel time when one is
                             // actually recorded. 13 nurseries have drive = 0.
-                            if (biz.drive > 0) ...[
+                            if (app.travelText(biz) != null) ...[
                               const Text('·',
                                   style: TextStyle(color: Yozi.muted)),
                               const Icon(Icons.directions_car_rounded,
                                   size: 14, color: Yozi.muted),
                               Text(
-                                  '${biz.drive} ${app.t('min')} ${app.t('drive')}',
+                                  '${app.travelText(biz)}',
                                   style: const TextStyle(
                                       fontSize: 13, color: Yozi.muted)),
                             ],

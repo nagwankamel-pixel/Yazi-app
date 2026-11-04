@@ -516,29 +516,18 @@ class ShellIndex extends ChangeNotifier {
 }
 
 
-/// Real GPS: detect position, snap to the nearest area, update the app.
+/// Share location: gets the real position for distances. Never changes the area.
 Future<void> _useMyLocation(BuildContext context) async {
   final app = context.read<AppState>();
   showToast(context, '📍 ${app.t('locating')}');
-  try {
-    final res = await detectNearestArea();
-    if (!context.mounted) return;
-    if (res.off) {
-      showToast(context, app.t('locationOff'));
-      showAreaPicker(context);
-    } else if (res.denied) {
-      showToast(context, app.t('locationDenied'));
-      showAreaPicker(context);
-    } else if (res.areaIndex != null) {
-      app.setArea(res.areaIndex!);
-      showToast(context,
-          '📍 ${app.t('locationSet')}: ${kAreas[res.areaIndex!].name(app.lang)}');
-    }
-  } catch (_) {
-    if (!context.mounted) return;
-    showToast(context, app.t('locationOff'));
-    showAreaPicker(context);
+  final res = await app.shareLocation();
+  if (!context.mounted) return;
+  if (res.ok) {
+    showToast(context, '📍 ${app.t('locationShared')}');
+  } else {
+    showToast(context, app.t(res.denied ? 'locationDenied' : 'locationOff'));
   }
+  showAreaPicker(context);
 }
 
 

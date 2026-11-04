@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/mock.dart';
 import 'i18n.dart';
+import 'location.dart';
 
 class ChildProfile {
   ChildProfile({required this.age, this.name = ''});
@@ -21,6 +23,7 @@ class AppState extends ChangeNotifier {
     wallet = _prefs.getInt('wallet') ?? 0;
     deviceId = _prefs.getString('deviceId') ?? _newDeviceId();
     _prefs.setString('deviceId', deviceId);
+    if (_prefs.getBool('locShared') ?? false) _silentLocate();
     admissionSubs.addAll(_prefs.getStringList('admSubs') ?? const []);
     seenAlerts.addAll(_prefs.getStringList('seenAlerts') ?? const []);
     savedBiz.addAll(_prefs.getStringList('savedBiz') ?? const []);
@@ -40,6 +43,66 @@ class AppState extends ChangeNotifier {
   String lang = 'en';
   bool onboarded = false;
   int areaIndex = 1;
+
+  /// User's real position. Kept on this device only, never sent anywhere.
+  double? userLat, userLng;
+  bool get hasLocation => userLat != null && userLng != null;
+
+  /// Asks for permission and reads the position. Does NOT change the area.
+  Future<UserPosition> shareLocation() async {
+    try {
+      final p = await getUserPosition();
+      if (p.ok) {
+        userLat = p.lat;
+        userLng = p.lng;
+        _prefs.setBool('locShared', true);
+        notifyListeners();
+      }
+      return p;
+    } catch (_) {
+      return const UserPosition(off: true);
+    }
+  }
+
+  /// On launch: refresh the position silently if the user shared before.
+  Future<void> _silentLocate() async {
+    try {
+      final p = await getUserPosition(ask: false);
+      if (p.ok) {
+        userLat = p.lat;
+        userLng = p.lng;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  /// Estimated road minutes from the user to [b] (null if unknown).
+  int? minutesTo(Business b) {
+    final km = kmTo(b);
+    if (km == null) return null;
+    return max(1, (km * 2.7).round()); // ~22 km/h average city driving
+  }
+
+  /// Estimated road distance in km (straight line x 1.35).
+  double? kmTo(Business b) {
+    if (!hasLocation || b.lat == null || b.lng == null) return null;
+    const r = 6371.0;
+    double rad(double d) => d * pi / 180;
+    final dLat = rad(b.lat! - userLat!);
+    final dLng = rad(b.lng! - userLng!);
+    final a = pow(sin(dLat / 2), 2) +
+        cos(rad(userLat!)) * cos(rad(b.lat!)) * pow(sin(dLng / 2), 2);
+    return 2 * r * asin(sqrt(a)) * 1.35;
+  }
+
+  /// "~12 min · 4.5 km", or null when location is not shared.
+  String? travelText(Business b) {
+    final m = minutesTo(b);
+    final km = kmTo(b);
+    if (m == null || km == null) return null;
+    final kmS = km < 10 ? km.toStringAsFixed(1) : km.round().toString();
+    return '~$m ${t('min')} · $kmS ${t('km')}';
+  }
   bool premium = false;
   int wallet = 0;
   final Set<String> savedBiz = {};

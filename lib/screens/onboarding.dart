@@ -119,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ]),
       ),
       const SizedBox(height: 26),
-      Text('${app.t('chooseLang')} · Choose language',
+      Text(app.lang == 'ar' ? 'اختاري لغتك' : 'Choose your language',
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
       const SizedBox(height: 18),
       card('ar', 'العربية'),
@@ -155,19 +155,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       TextButton.icon(
         onPressed: () async {
           showToast(context, '📍 ${app.t('locating')}');
-          try {
-            final res = await detectNearestArea();
-            if (!mounted) return;
-            if (res.areaIndex != null) {
-              app.setArea(res.areaIndex!);
-              showToast(context,
-                  '📍 ${app.t('locationSet')}: ${kAreas[res.areaIndex!].name(app.lang)}');
-            } else {
-              showToast(context, app.t(res.off ? 'locationOff' : 'locationDenied'));
-            }
-          } catch (_) {
-            if (mounted) showToast(context, app.t('locationOff'));
-          }
+          final res = await app.shareLocation();
+          if (!mounted) return;
+          showToast(
+              context,
+              res.ok
+                  ? '📍 ${app.t('locationShared')}'
+                  : app.t(res.denied ? 'locationDenied' : 'locationOff'));
         },
         icon: const Icon(Icons.near_me_rounded, size: 17),
         label: Text(app.t('useMyLocation')),

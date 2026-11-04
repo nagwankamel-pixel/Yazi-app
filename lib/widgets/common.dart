@@ -322,7 +322,7 @@ class BizCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                               '${kAreas[biz.area].name(app.lang)}'
-                              '${biz.drive > 0 ? ' · ${biz.drive} ${app.t('min')} 🚗' : ''}',
+                              '${app.travelText(biz) != null ? ' · ${app.travelText(biz)} 🚗' : ''}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(

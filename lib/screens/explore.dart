@@ -411,9 +411,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
             !_filters.contains('off') ||
             b.offer ||
             kOffers.any((o) => o.bizId == b.id))
-        // Item 11: drive == 0 means "not recorded", not "zero minutes away".
-        .where((b) =>
-            !_filters.contains('near') || (b.drive > 0 && b.drive <= 15))
+        .where((b) {
+          if (!_filters.contains('near') || !app.hasLocation) return true;
+          final m = app.minutesTo(b);
+          return m != null && m <= 15;
+        })
         .toList()
       ..sort((a, b) {
         switch (_sort) {
@@ -421,8 +423,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
             return b.rating.compareTo(a.rating);
           case 'near':
             // unknown durations sort last instead of first
-            final ad = a.drive > 0 ? a.drive : 9999;
-            final bd = b.drive > 0 ? b.drive : 9999;
+            final ad = app.minutesTo(a) ?? 9999;
+            final bd = app.minutesTo(b) ?? 9999;
             return ad.compareTo(bd);
           default:
             // Recommended order: places matching more of the selected
@@ -704,7 +706,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 style: const TextStyle(color: Yozi.muted, fontSize: 13)),
             const Spacer(),
             PopupMenuButton<String>(
-              onSelected: (v) => setState(() => _sort = v),
+              onSelected: (v) async {
+                if (v == 'near' && !app.hasLocation) {
+                  if (!await _askLocation(app)) return;
+                }
+                setState(() => _sort = v);
+              },
               itemBuilder: (_) => sortLabels.entries
                   .map((e) => PopupMenuItem(
                       value: e.key,
@@ -996,12 +1003,45 @@ class _ResultsScreenState extends State<ResultsScreen> {
           icon: icon,
           label: label,
           selected: on,
-          onTap: () => setState(() {
-            on ? _filters.remove(id) : _filters.add(id);
-          }),
+          onTap: () async {
+            if (id == 'near' && !on && !context.read<AppState>().hasLocation) {
+              if (!await _askLocation(context.read<AppState>())) return;
+            }
+            if (!mounted) return;
+            setState(() {
+              on ? _filters.remove(id) : _filters.add(id);
+            });
+          },
         ),
       ),
     );
+  }
+
+  /// Asks the user to share location. Returns true if a position was obtained.
+  Future<bool> _askLocation(AppState app) async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(app.t('shareLocTitle')),
+        content: Text(app.t('shareLocBody')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(app.t('notNow'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(app.t('shareLocBtn'))),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return false;
+    final res = await app.shareLocation();
+    if (!mounted) return false;
+    if (!res.ok) {
+      showToast(context, app.t(res.denied ? 'locationDenied' : 'locationOff'));
+      return false;
+    }
+    return true;
   }
 }
 
