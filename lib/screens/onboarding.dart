@@ -18,7 +18,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _page = PageController();
   int _step = 0;
 
-  void _next() {
+  Future<void> _next() async {
+    // Ask for location right after the language is chosen (first launch).
+    if (_step == 0) {
+      final app = context.read<AppState>();
+      if (!app.hasLocation) await askShareLocation(context, app);
+      if (!mounted) return;
+    }
     if (_step < 2) {
       _page.nextPage(
           duration: const Duration(milliseconds: 320),
@@ -150,28 +156,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onTap: () => app.setArea(i),
           );
         }),
-      ),
-      const SizedBox(height: 12),
-      TextButton.icon(
-        onPressed: () async {
-          showToast(context, '📍 ${app.t('locating')}');
-          final res = await app.shareLocation();
-          if (!mounted) return;
-          showToast(
-              context,
-              res.ok
-                  ? '📍 ${app.t('locationShared')}'
-                  : app.t(res.denied ? 'locationDenied' : 'locationOff'));
-        },
-        icon: const Icon(Icons.near_me_rounded, size: 17),
-        label: Text(app.t('useMyLocation')),
-        style: TextButton.styleFrom(
-            foregroundColor: Yozi.violetDeep,
-            backgroundColor: Yozi.violetSoft,
-            minimumSize: const Size.fromHeight(48),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800)),
       ),
       const Spacer(),
       FilledButton(onPressed: _next, child: Text(app.t('cont'))),

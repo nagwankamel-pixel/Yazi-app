@@ -76,14 +76,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Estimated road minutes from the user to [b] (null if unknown).
-  int? minutesTo(Business b) {
-    final km = kmTo(b);
-    if (km == null) return null;
-    return max(1, (km * 2.7).round()); // ~22 km/h average city driving
-  }
-
-  /// Estimated road distance in km (straight line x 1.35).
+  /// Estimated road distance in km (straight line x 1.3).
   double? kmTo(Business b) {
     if (!hasLocation || b.lat == null || b.lng == null) return null;
     const r = 6371.0;
@@ -92,16 +85,15 @@ class AppState extends ChangeNotifier {
     final dLng = rad(b.lng! - userLng!);
     final a = pow(sin(dLat / 2), 2) +
         cos(rad(userLat!)) * cos(rad(b.lat!)) * pow(sin(dLng / 2), 2);
-    return 2 * r * asin(sqrt(a)) * 1.35;
+    return 2 * r * asin(sqrt(a)) * 1.3;
   }
 
-  /// "~12 min · 4.5 km", or null when location is not shared.
+  /// "~4.5 km" (estimate), or null when location is not shared.
   String? travelText(Business b) {
-    final m = minutesTo(b);
     final km = kmTo(b);
-    if (m == null || km == null) return null;
+    if (km == null) return null;
     final kmS = km < 10 ? km.toStringAsFixed(1) : km.round().toString();
-    return '~$m ${t('min')} · $kmS ${t('km')}';
+    return '~$kmS ${t('km')}';
   }
   bool premium = false;
   int wallet = 0;

@@ -169,7 +169,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                             if (app.travelText(biz) != null) ...[
                               const Text('·',
                                   style: TextStyle(color: Yozi.muted)),
-                              const Icon(Icons.directions_car_rounded,
+                              const Icon(Icons.near_me_rounded,
                                   size: 14, color: Yozi.muted),
                               Text(
                                   '${app.travelText(biz)}',

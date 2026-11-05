@@ -413,8 +413,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
             kOffers.any((o) => o.bizId == b.id))
         .where((b) {
           if (!_filters.contains('near') || !app.hasLocation) return true;
-          final m = app.minutesTo(b);
-          return m != null && m <= 15;
+          final d = app.kmTo(b);
+          return d != null && d <= 6;
         })
         .toList()
       ..sort((a, b) {
@@ -423,8 +423,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
             return b.rating.compareTo(a.rating);
           case 'near':
             // unknown durations sort last instead of first
-            final ad = app.minutesTo(a) ?? 9999;
-            final bd = app.minutesTo(b) ?? 9999;
+            final ad = app.kmTo(a) ?? 9999;
+            final bd = app.kmTo(b) ?? 9999;
             return ad.compareTo(bd);
           default:
             // Recommended order: places matching more of the selected
@@ -1017,32 +1017,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
-  /// Asks the user to share location. Returns true if a position was obtained.
-  Future<bool> _askLocation(AppState app) async {
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(app.t('shareLocTitle')),
-        content: Text(app.t('shareLocBody')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(app.t('notNow'))),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(app.t('shareLocBtn'))),
-        ],
-      ),
-    );
-    if (go != true || !mounted) return false;
-    final res = await app.shareLocation();
-    if (!mounted) return false;
-    if (!res.ok) {
-      showToast(context, app.t(res.denied ? 'locationDenied' : 'locationOff'));
-      return false;
-    }
-    return true;
-  }
+  Future<bool> _askLocation(AppState app) => askShareLocation(context, app);
 }
 
 /// Subcategory card with its 3D artwork (languages, indoor / outdoor / pool).

@@ -322,7 +322,7 @@ class BizCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                               '${kAreas[biz.area].name(app.lang)}'
-                              '${app.travelText(biz) != null ? ' · ${app.travelText(biz)} 🚗' : ''}',
+                              '${app.travelText(biz) != null ? ' · ${app.travelText(biz)}' : ''}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -509,4 +509,34 @@ class SubcatIcon extends StatelessWidget {
     }
     return bundled();
   }
+}
+
+
+/// Friendly explanation dialog, then the system permission prompt.
+/// Returns true when a position was obtained. Never changes the area.
+Future<bool> askShareLocation(BuildContext context, AppState app) async {
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(app.t('shareLocTitle')),
+      content: Text(app.t('shareLocBody')),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(app.t('notNow'))),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(app.t('shareLocBtn'))),
+      ],
+    ),
+  );
+  if (go != true || !context.mounted) return false;
+  final res = await app.shareLocation();
+  if (!context.mounted) return false;
+  showToast(
+      context,
+      res.ok
+          ? '📍 ${app.t('locationShared')}'
+          : app.t(res.denied ? 'locationDenied' : 'locationOff'));
+  return res.ok;
 }

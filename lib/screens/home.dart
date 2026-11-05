@@ -38,22 +38,6 @@ void showAreaPicker(BuildContext context) {
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
-              // detect the area instead of picking it by hand
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _useMyLocation(context);
-                },
-                icon: const Icon(Icons.near_me_rounded, size: 17),
-                label: Text(app.t('useMyLocationShort')),
-                style: TextButton.styleFrom(
-                    foregroundColor: Yozi.violetDeep,
-                    backgroundColor: Yozi.violetSoft,
-                    minimumSize: const Size.fromHeight(46),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w800)),
-              ),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 9,
@@ -513,21 +497,6 @@ class ShellIndex extends ChangeNotifier {
     value = v;
     notifyListeners();
   }
-}
-
-
-/// Share location: gets the real position for distances. Never changes the area.
-Future<void> _useMyLocation(BuildContext context) async {
-  final app = context.read<AppState>();
-  showToast(context, '📍 ${app.t('locating')}');
-  final res = await app.shareLocation();
-  if (!context.mounted) return;
-  if (res.ok) {
-    showToast(context, '📍 ${app.t('locationShared')}');
-  } else {
-    showToast(context, app.t(res.denied ? 'locationDenied' : 'locationOff'));
-  }
-  showAreaPicker(context);
 }
 
 

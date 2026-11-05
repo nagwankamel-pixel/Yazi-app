@@ -264,6 +264,23 @@ class ProfileScreen extends StatelessWidget {
                 label: app.t('changeArea'),
                 onTap: () => showAreaPicker(context)),
             _MenuItem(
+                icon: Icons.my_location_rounded,
+                label: app.t('myLocation'),
+                trailing: Text(
+                    app.hasLocation ? app.t('locOn') : app.t('locOff'),
+                    style: TextStyle(
+                        color: app.hasLocation ? Yozi.violet : Yozi.muted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800)),
+                onTap: () async {
+                  final ok = app.hasLocation
+                      ? (await app.shareLocation()).ok
+                      : await askShareLocation(context, app);
+                  if (app.hasLocation && ok && context.mounted) {
+                    showToast(context, '📍 ${app.t('locationUpdated')}');
+                  }
+                }),
+            _MenuItem(
                 icon: Icons.notifications_none_rounded,
                 label: app.t('notifications'),
                 onTap: () => showToast(context, app.t('notifToast'))),
